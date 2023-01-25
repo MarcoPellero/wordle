@@ -46,36 +46,88 @@ func read_wordlist(path string) []string {
 }
 
 func play_single_word(wordlist []string, first_guess, hidden string) int {
-	guesses := 1
-	pattern := get_pattern(first_guess, hidden)
-	candidates := get_candidates(wordlist, first_guess, pattern)
+	guess := Guess{first_guess, -1}
+	var pattern []byte
+	candidates := make([]string, len(wordlist))
+	copy(candidates, wordlist)
 
-	for !bytes.Equal(pattern, bytes.Repeat([]byte{'g'}, len(pattern))) {
-		guesses++
-		next_guess := get_optimal_guess(candidates, wordlist)
-		pattern = get_pattern(next_guess.word, hidden)
+	for i := 1; true; i++ {
+		pattern = get_pattern(guess.word, hidden)
+		if bytes.Equal(pattern, bytes.Repeat([]byte{'g'}, len(pattern))) {
+			return i
+		}
 
-		fmt.Printf("\t[%d] [%s %f] %s\n", len(candidates), next_guess.word, next_guess.entropy, pattern)
-		candidates = get_candidates(candidates, next_guess.word, pattern)
+		candidates = get_candidates(candidates, guess.word, pattern)
+		if i == 1 {
+			guess.word = read_from_cache(pattern)
+		} else {
+			guess = get_optimal_guess(candidates, wordlist)
+		}
 	}
 
-	return guesses
+	panic("Unreachable return statement")
 }
 
-func play_dictionary(path, first_guess string) float64 {
-	mean := .0
-	total_guesses := 0
+func interactive_game(wordlist []string) {
+	candidates := make([]string, len(wordlist))
+	copy(candidates, wordlist)
 
-	wordlist := read_wordlist(path)
-	for i, word := range wordlist {
-		fmt.Printf("Solving for %s\n", word)
+	var guess string
+	var pattern []byte
+	guesses := 0
+	for guesses = 0; ; guesses++ {
+		fmt.Print("Guess: ")
+		fmt.Scanln(&guess)
+		fmt.Print("Pattern: ")
+		fmt.Scanln(&pattern)
 
-		guesses := play_single_word(wordlist, first_guess, word)
-		total_guesses += guesses
-		mean = float64(total_guesses) / float64(i+1)
+		if bytes.Equal(pattern, bytes.Repeat([]byte{'g'}, len(pattern))) {
+			break
+		}
 
-		fmt.Printf("[%d / %d] [%f]  %s: %d\n\n", i, len(wordlist), mean, word, guesses)
+		candidates = get_candidates(candidates, guess, pattern)
+		if len(candidates) == 1 {
+			fmt.Printf("The hidden word is %s!\n", candidates[0])
+			guesses++
+			break
+		}
+
+		suggestion := get_optimal_guess(candidates, wordlist)
+		fmt.Printf("You should guess %s\n", suggestion.word)
 	}
 
-	return mean
+	fmt.Printf("Success! solved in %d guesses\n", guesses)
+}
+
+func play_dictionary(wordlist []string, first_guess string) float64 {
+	total_guesses := 0
+
+	for i, word := range wordlist {
+		guesses := play_single_word(wordlist, first_guess, word)
+		total_guesses += guesses
+		fmt.Printf("[%d / %d] %s: %d\n", i, len(wordlist), word, guesses)
+	}
+
+	return float64(total_guesses) / float64(len(wordlist))
+}
+
+func main() {
+	wordlist_path := "../wordlists/small"
+	wordlist := read_wordlist(wordlist_path)
+
+	if len(os.Args) <= 1 {
+		fmt.Println("You need to invoke this command with an extra parameter! (-dictionary or -interactive)")
+	} else if os.Args[1] == "-dictionary" {
+		first_guess := "sarti"
+		if len(os.Args) >= 3 {
+			first_guess = os.Args[2]
+		}
+
+		mean := play_dictionary(wordlist, first_guess)
+		fmt.Printf("Solved words in, on average, %f guesses\n", mean)
+	} else if os.Args[1] == "-interactive" {
+		interactive_game(wordlist)
+	} else {
+		fmt.Println("Invalid parameter! Use dictionary or interactive")
+	}
 }
