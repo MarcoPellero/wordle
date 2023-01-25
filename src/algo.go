@@ -137,9 +137,6 @@ func get_optimal_guess(candidates, wordlist []string) Guess {
 	best := Guess{candidates[0], -1}
 	for _, word := range wordlist {
 		entropy := calculate_guess_entropy(candidates, word)
-		// if word == "cedro" {
-		// 	fmt.Printf("\t\t%s %f\n", word, entropy)
-		// }
 		if entropy > best.entropy {
 			best = Guess{word, entropy}
 		}
