@@ -59,8 +59,8 @@ func build_starting_cache(initial_guess string, wordlist []string, path string) 
 	}
 }
 
-func read_from_cache(pattern []byte) string {
-	file, err := os.Open("../data/cache1")
+func read_from_cache(path string, pattern []byte) string {
+	file, err := os.Open(path)
 	if err != nil {
 		panic("Couldn't open initial cache to read from")
 	}

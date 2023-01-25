@@ -45,7 +45,7 @@ func read_wordlist(path string) []string {
 	return strings.Split(string(data), "\n")
 }
 
-func play_single_word(wordlist []string, first_guess, hidden string) int {
+func play_single_word(wordlist []string, cache_path string, first_guess, hidden string) int {
 	guess := Guess{first_guess, -1}
 	var pattern []byte
 	candidates := make([]string, len(wordlist))
@@ -59,7 +59,7 @@ func play_single_word(wordlist []string, first_guess, hidden string) int {
 
 		candidates = get_candidates(candidates, guess.word, pattern)
 		if i == 1 {
-			guess.word = read_from_cache(pattern)
+			guess.word = read_from_cache(cache_path, pattern)
 		} else {
 			guess = get_optimal_guess(candidates, wordlist)
 		}
@@ -99,11 +99,11 @@ func interactive_game(wordlist []string) {
 	fmt.Printf("Success! solved in %d guesses\n", guesses)
 }
 
-func play_dictionary(wordlist []string, first_guess string) float64 {
+func play_dictionary(wordlist []string, cache_path string, first_guess string) float64 {
 	total_guesses := 0
 
 	for i, word := range wordlist {
-		guesses := play_single_word(wordlist, first_guess, word)
+		guesses := play_single_word(wordlist, cache_path, first_guess, word)
 		total_guesses += guesses
 		fmt.Printf("[%d / %d] %s: %d\n", i, len(wordlist), word, guesses)
 	}
@@ -112,18 +112,25 @@ func play_dictionary(wordlist []string, first_guess string) float64 {
 }
 
 func main() {
+	first_guess := "sarti"
+
 	wordlist_path := "../wordlists/small"
 	wordlist := read_wordlist(wordlist_path)
+
+	cache_path := "../data/cache1"
+	if _, err := os.Stat(cache_path); err != nil {
+		fmt.Println("Generating cache, wait...")
+		build_starting_cache(first_guess, wordlist, cache_path)
+	}
 
 	if len(os.Args) <= 1 {
 		fmt.Println("You need to invoke this command with an extra parameter! (-dictionary or -interactive)")
 	} else if os.Args[1] == "-dictionary" {
-		first_guess := "sarti"
 		if len(os.Args) >= 3 {
 			first_guess = os.Args[2]
 		}
 
-		mean := play_dictionary(wordlist, first_guess)
+		mean := play_dictionary(wordlist, cache_path, first_guess)
 		fmt.Printf("Solved words in, on average, %f guesses\n", mean)
 	} else if os.Args[1] == "-interactive" {
 		interactive_game(wordlist)
