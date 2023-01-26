@@ -74,7 +74,7 @@ func interactive_game(wordlist []string) {
 
 	var guess string
 	var pattern []byte
-	guesses := 0
+	var guesses int
 	for guesses = 0; ; guesses++ {
 		fmt.Print("Guess: ")
 		fmt.Scanln(&guess)
@@ -88,7 +88,7 @@ func interactive_game(wordlist []string) {
 		candidates = get_candidates(candidates, guess, pattern)
 		if len(candidates) == 1 {
 			fmt.Printf("The hidden word is %s!\n", candidates[0])
-			guesses++
+			guesses += 2
 			break
 		}
 
@@ -114,7 +114,7 @@ func play_dictionary(wordlist []string, cache_path string, first_guess string) f
 func main() {
 	first_guess := "sarti"
 
-	wordlist_path := "../wordlists/small"
+	wordlist_path := "../wordlists/big"
 	wordlist := read_wordlist(wordlist_path)
 
 	cache_path := "../data/cache1"
