@@ -129,22 +129,6 @@ func calculate_guess_entropy(wordlist []string, guess string) float64 {
 	return entropy
 }
 
-func _get_optimal_guess(candidates, wordlist []string) Guess {
-	if len(candidates) == 1 {
-		return Guess{candidates[0], 0}
-	}
-
-	best := Guess{candidates[0], -1}
-	for _, word := range wordlist {
-		entropy := calculate_guess_entropy(candidates, word)
-		if entropy > best.entropy {
-			best = Guess{word, entropy}
-		}
-	}
-
-	return best
-}
-
 func get_optimal_guess(candidates, wordlist []string) Guess {
 	type Job struct {
 		id   int
