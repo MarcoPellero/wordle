@@ -1,87 +1,103 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
-	"math"
+	"encoding/binary"
+	"fmt"
 	"os"
-	"strings"
 )
 
-func build_starting_cache(initial_guess string, wordlist []string, path string) {
-	// this will try all possile patterns, for each one decide the best next guess, and save all of these to a file
-	// since the first 1 or 2 guesses are EXTREMELY slow to find cause there's a lot of candidates, this will be a huge speedup
-	pattern := make([]byte, len(initial_guess))
-	for i := 0; i < len(pattern); i++ {
-		pattern[i] = 'b'
-	}
+// FORMAT [2 bytes: word length][2 bytes: number of words][word 1][word 2][word 3]
 
-	precalc_logs := make([]float64, len(wordlist))
-	for i := 0; i < len(precalc_logs); i++ {
-		precalc_logs[i] = math.Log2(float64(i))
-	}
-
-	gy_counter := []int{0, 0}
-
+func store_cache(wordlist []string, path, first_guess string) {
 	file, err := os.Create(path)
 	if err != nil {
-		panic("Couldn't open initial cache file")
+		panic(fmt.Sprintf("Couldn't create cache file at %s", path))
 	}
 	defer file.Close()
 
-	for !bytes.Equal(pattern, []byte(strings.Repeat("g", len(pattern)))) {
-		// if all letters are green, and the last one is yellow, the pattern is illegal
-		if gy_counter[0] != 4 || gy_counter[1] != 1 {
-			candidates := get_candidates(wordlist, initial_guess, pattern)
+	buf_uint16 := make([]byte, 2)
+	word_len := len(wordlist[0])
+	binary.LittleEndian.PutUint16(buf_uint16, uint16(word_len))
+	file.Write(buf_uint16)
+	binary.LittleEndian.PutUint16(buf_uint16, uint16(len(wordlist)))
+	file.Write(buf_uint16)
+
+	pattern := bytes.Repeat([]byte{'b'}, word_len)
+
+	color_counter := []int{0, 0}
+	for color_counter[0] != word_len {
+		is_valid := false
+		if color_counter[0] != word_len-1 || color_counter[1] != 1 {
+			candidates := get_candidates(wordlist, first_guess, pattern)
 			if len(candidates) != 0 {
-				best_guess := get_optimal_guess(candidates, wordlist)
-				file.Write([]byte(best_guess.word))
+				is_valid = true
+				optimal_guess := get_optimal_guess(candidates, wordlist)
+				file.WriteString(optimal_guess.word)
 			}
 		}
 
-		file.WriteString("\n")
+		if !is_valid {
+			file.Write([]byte{0})
+		}
 
 		for i := 0; i < len(pattern); i++ {
 			if pattern[i] == 'g' {
 				pattern[i] = 'b'
-				gy_counter[0]--
+				color_counter[0]--
 				continue
 			} else if pattern[i] == 'y' {
 				pattern[i] = 'g'
-				gy_counter[0]++
-				gy_counter[1]--
+				color_counter[0]++
+				color_counter[1]--
 			} else {
 				pattern[i] = 'y'
-				gy_counter[1]++
+				color_counter[1]++
 			}
 			break
 		}
 	}
 }
 
-func read_from_cache(path string, pattern []byte) string {
+func build_cache(path string) func([]byte) string {
 	file, err := os.Open(path)
 	if err != nil {
-		panic("Couldn't open initial cache to read from")
+		panic(fmt.Sprintf("Couldn't open cache file at %s", path))
 	}
-	defer file.Close()
-	reader := bufio.NewReader(file)
 
-	idx := 0
-	for i, x := range pattern {
-		base := int(math.Pow(3, float64(i)))
-		if x == 'b' {
-			base = 0
-		} else if x == 'g' {
-			base *= 2
+	buf_int16 := make([]byte, 2)
+	file.Read(buf_int16)
+	word_len := int(binary.LittleEndian.Uint16(buf_int16))
+	file.Read(buf_int16)
+	wordlist_len := int(binary.LittleEndian.Uint16(buf_int16))
+
+	cache := make([]string, wordlist_len)
+	word_buf := make([]byte, word_len)
+	letter_buf := make([]byte, 1)
+	offset := int64(len(buf_int16) * 2)
+
+	for i := 0; i < wordlist_len; i++ {
+		if file.ReadAt(letter_buf, int64(offset)); letter_buf[0] == 0 {
+			offset++
+			continue
 		}
-		idx += base
+		file.ReadAt(word_buf, int64(offset))
+		cache[i] = string(word_buf)
+		offset += int64(word_len)
 	}
 
-	for i := 0; i < idx; i++ {
-		reader.ReadBytes('\n')
-	}
+	return func(pattern []byte) string {
+		idx := 0
+		base := 1
+		for _, x := range pattern {
+			if x == 'y' {
+				idx += base
+			} else if x == 'g' {
+				idx += base * 2
+			}
+			base *= 3
+		}
 
-	line, _ := reader.ReadBytes('\n')
-	return string(line[:len(line)-1])
+		return cache[idx]
+	}
 }
