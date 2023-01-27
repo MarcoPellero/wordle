@@ -130,10 +130,6 @@ func calculate_guess_entropy(wordlist []string, guess string) float64 {
 }
 
 func get_optimal_guess(candidates, wordlist []string) Guess {
-	type Job struct {
-		id   int
-		word string
-	}
 	type Result struct {
 		id      int
 		entropy float64
@@ -143,28 +139,34 @@ func get_optimal_guess(candidates, wordlist []string) Guess {
 		return Guess{candidates[0], 0}
 	}
 
-	jobs := make(chan Job, len(wordlist))
-	results := make(chan Result)
-	num_of_workers := 100
+	jobs := make(chan int, len(wordlist))
+	results := make(chan Result, len(wordlist))
+	num_of_workers := 20
 
 	for i := 0; i < num_of_workers; i++ {
 		go func() {
-			for job := range jobs {
-				entropy := calculate_guess_entropy(candidates, job.word)
-				results <- Result{job.id, entropy}
+			for id := range jobs {
+				entropy := calculate_guess_entropy(candidates, wordlist[id])
+				results <- Result{id, entropy}
 			}
 		}()
 	}
 
-	for id, word := range wordlist {
-		jobs <- Job{id, word}
+	for i := 0; i < len(wordlist); i++ {
+		jobs <- i
 	}
 
 	best := Guess{candidates[0], -1}
+	best_id := 0
 	for i := 0; i < len(wordlist); i++ {
 		res := <-results
-		if res.entropy > best.entropy {
+
+		// the reason for taking the one with the lower idx (in wordlist) if 2 guesses have the same entropy
+		// is to make sure that the algorithm is deterministic. without this check, the guesses vary,
+		// and the avg. guesses in a simulation does aswell, although it does so by a very small margin (< .001, or 0.03%)
+		if res.entropy > best.entropy || (res.entropy == best.entropy && res.id < best_id) {
 			best = Guess{wordlist[res.id], res.entropy}
+			best_id = res.id
 		}
 	}
 
