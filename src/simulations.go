@@ -114,7 +114,7 @@ func play_dictionary(wordlist []string, cache func([]byte) string, first_guess s
 func main() {
 	first_guess := "sarti"
 
-	wordlist_path := "../wordlists/small"
+	wordlist_path := "../wordlists/adaptive"
 	wordlist := read_wordlist(wordlist_path)
 
 	cache_path := "../data/cache1"
@@ -135,6 +135,8 @@ func main() {
 		fmt.Printf("Solved words in, on average, %f guesses\n", mean)
 	} else if os.Args[1] == "-interactive" {
 		interactive_game(wordlist, cache)
+	} else if os.Args[1] == "-api" {
+		run_server(wordlist_path)
 	} else {
 		fmt.Println("Invalid parameter! Use dictionary or interactive")
 	}
