@@ -88,18 +88,17 @@ func calculate_pattern_entropy(wordlist []string, guess string, pattern []byte) 
 
 func calculate_guess_entropy(wordlist []string, guess string) float64 {
 	entropy := .0
-
 	color_counter := []int{0, 0} // [G, Y]
-
 	pattern := bytes.Repeat([]byte{'b'}, len(guess))
-	for {
+
+	is_last := false
+	for !is_last {
 		// if all letters are green, except for a yellow one, the pattern is illegal and should not be considered
 		if color_counter[0] != len(guess)-1 || color_counter[1] != 1 {
 			entropy += calculate_pattern_entropy(wordlist, guess, pattern)
 		}
 
 		// go to next pattern
-		is_last := false
 		for i := 0; i <= len(pattern); i++ {
 			if i == len(pattern) {
 				is_last = true
@@ -120,13 +119,25 @@ func calculate_guess_entropy(wordlist []string, guess string) float64 {
 			}
 			break
 		}
-
-		if is_last {
-			break
-		}
 	}
 
 	return entropy
+}
+
+func _sync_get_optimal_guess(candidates, wordlist []string) Guess {
+	if len(candidates) == 1 {
+		return Guess{candidates[0], 0}
+	}
+
+	best := Guess{candidates[0], -1}
+	for i := 0; i < len(wordlist); i++ {
+		entropy := calculate_guess_entropy(candidates, wordlist[i])
+		if entropy > best.entropy {
+			best = Guess{wordlist[i], entropy}
+		}
+	}
+
+	return best
 }
 
 func get_optimal_guess(candidates, wordlist []string) Guess {
