@@ -136,7 +136,9 @@ func main() {
 	} else if os.Args[1] == "-interactive" {
 		interactive_game(wordlist, cache)
 	} else if os.Args[1] == "-api" {
-		run_server(wordlist_path)
+		bot_server(wordlist_path)
+	} else if os.Args[1] == "-filter-wordlist" {
+		filter_wordlist_server(wordlist_path)
 	} else {
 		fmt.Println("Invalid parameter! Use dictionary or interactive")
 	}

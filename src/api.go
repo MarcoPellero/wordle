@@ -171,7 +171,7 @@ func (server *Server) guess(res http.ResponseWriter, req *http.Request) {
 	fmt.Printf("/guess %s [%f] [%d solutions]\n", next_guess.word, next_guess.entropy, len(candidates))
 }
 
-func run_server(wordlist_path string) {
+func bot_server(wordlist_path string) {
 	server := Server{read_wordlist(wordlist_path), make(map[uuid.UUID]Session), sync.Mutex{}}
 
 	http.HandleFunc("/spawn", server.spawn)
@@ -192,6 +192,43 @@ func run_server(wordlist_path string) {
 
 		fmt.Printf("[%d] [%d]\r", len(server.sessions), len(server.wordlist))
 		// dump_wordlist(server.wordlist, wordlist_path)
+		time.Sleep(100 * time.Millisecond)
+	}
+}
+
+func filter_wordlist_server(wordlist_path string) {
+	server := Server{read_wordlist(wordlist_path), make(map[uuid.UUID]Session), sync.Mutex{}}
+	filter_idx := 0
+
+	http.HandleFunc("/spawn", func(w http.ResponseWriter, r *http.Request) {
+		http.SetCookie(w, &http.Cookie{Name: "session-id", Value: "filter-wordlist"})
+		w.WriteHeader(200)
+	})
+
+	http.HandleFunc("/kill", func(w http.ResponseWriter, r *http.Request) {})
+
+	http.HandleFunc("/remove", server.remove)
+	http.HandleFunc("/add", server.add)
+	http.HandleFunc("/guess", func(w http.ResponseWriter, r *http.Request) {
+		server.mutex.Lock()
+		defer server.mutex.Unlock()
+
+		w.Write([]byte(server.wordlist[filter_idx]))
+		filter_idx++
+	})
+	go http.ListenAndServe(":8081", nil)
+
+	for {
+		server.mutex.Lock()
+		for uuid, session := range server.sessions {
+			if time.Since(session.created_at) >= 2*time.Minute {
+				delete(server.sessions, uuid)
+			}
+		}
+		server.mutex.Unlock()
+
+		fmt.Printf("[%d] [%d]\r", len(server.sessions), len(server.wordlist))
+		dump_wordlist(server.wordlist, wordlist_path)
 		time.Sleep(100 * time.Millisecond)
 	}
 }
