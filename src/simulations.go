@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -60,7 +61,9 @@ func play_single_word(wordlist []string, cache func([]byte) string, first_guess,
 		candidates = get_candidates(candidates, guess.word, pattern)
 		if i == 1 {
 			guess.word = cache(pattern)
-		} else {
+		}
+
+		if i != 1 || len(guess.word) == 0 {
 			guess = get_optimal_guess(candidates, wordlist)
 		}
 	}
@@ -131,8 +134,15 @@ func main() {
 			first_guess = os.Args[2]
 		}
 
-		mean := play_dictionary(wordlist, cache, first_guess)
-		fmt.Printf("Solved words in, on average, %f guesses\n", mean)
+		num_of_runs := 1
+		if len(os.Args) >= 4 {
+			num_of_runs, _ = strconv.Atoi(os.Args[3])
+		}
+
+		for i := 0; i < num_of_runs; i++ {
+			mean := play_dictionary(wordlist, cache, first_guess)
+			fmt.Printf("[%d] Solved words in, on average, %f guesses\n", i, mean)
+		}
 	} else if os.Args[1] == "-interactive" {
 		interactive_game(wordlist, cache)
 	} else if os.Args[1] == "-api" {
