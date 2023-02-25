@@ -157,6 +157,11 @@ func get_optimal_guess(candidates, wordlist []string) Guess {
 	for i := 0; i < num_of_workers; i++ {
 		go func() {
 			for id := range jobs {
+				if id == -1 {
+					jobs <- id // so that other workers can close too
+					return
+				}
+
 				entropy := calculate_guess_entropy(candidates, wordlist[id])
 				results <- Result{id, entropy}
 			}
@@ -166,6 +171,7 @@ func get_optimal_guess(candidates, wordlist []string) Guess {
 	for i := 0; i < len(wordlist); i++ {
 		jobs <- i
 	}
+	jobs <- -1
 
 	best := Guess{candidates[0], -1}
 	best_id := 0
