@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"math"
 	"strings"
 )
@@ -140,14 +141,16 @@ func _sync_get_optimal_guess(candidates, wordlist []string) Guess {
 	return best
 }
 
-func get_optimal_guess(candidates, wordlist []string) Guess {
+func get_optimal_guess(candidates, wordlist []string) (Guess, error) {
 	type Result struct {
 		id      int
 		entropy float64
 	}
 
 	if len(candidates) == 1 {
-		return Guess{candidates[0], 0}
+		return Guess{candidates[0], 0}, nil
+	} else if len(candidates) == 0 {
+		return Guess{}, errors.New("Unknown word")
 	}
 
 	jobs := make(chan int, len(wordlist))
@@ -187,5 +190,5 @@ func get_optimal_guess(candidates, wordlist []string) Guess {
 		}
 	}
 
-	return best
+	return best, nil
 }

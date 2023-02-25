@@ -166,7 +166,17 @@ func (server *Server) guess(res http.ResponseWriter, req *http.Request) {
 	server.sessions[uuid] = Session{candidates, session.created_at}
 	server.mutex.Unlock()
 
-	next_guess := get_optimal_guess(candidates, server.wordlist)
+	var next_guess Guess
+	if false && last_guess == "sarti" {
+		next_guess.word = cache([]byte(pattern))
+	} else {
+		var err error
+		next_guess, err = get_optimal_guess(candidates, server.wordlist)
+		if err != nil {
+			res.WriteHeader(500)
+			return
+		}
+	}
 	res.Write([]byte(next_guess.word))
 	fmt.Printf("/guess %s [%f] [%d solutions]\n", next_guess.word, next_guess.entropy, len(candidates))
 }
@@ -184,14 +194,14 @@ func bot_server(wordlist_path string) {
 	for {
 		server.mutex.Lock()
 		for uuid, session := range server.sessions {
-			if time.Since(session.created_at) >= 2*time.Minute {
+			if time.Since(session.created_at) >= 30*time.Second {
 				delete(server.sessions, uuid)
 			}
 		}
 		server.mutex.Unlock()
 
 		fmt.Printf("[%d] [%d]\r", len(server.sessions), len(server.wordlist))
-		// dump_wordlist(server.wordlist, wordlist_path)
+		dump_wordlist(server.wordlist, wordlist_path)
 		time.Sleep(100 * time.Millisecond)
 	}
 }

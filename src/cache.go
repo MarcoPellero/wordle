@@ -32,7 +32,7 @@ func store_cache(wordlist []string, path, first_guess string) {
 			candidates := get_candidates(wordlist, first_guess, pattern)
 			if len(candidates) != 0 {
 				is_valid = true
-				optimal_guess := get_optimal_guess(candidates, wordlist)
+				optimal_guess, _ := get_optimal_guess(candidates, wordlist)
 				file.WriteString(optimal_guess.word)
 			}
 		}

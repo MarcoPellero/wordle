@@ -64,7 +64,7 @@ func play_single_word(wordlist []string, cache func([]byte) string, first_guess,
 		}
 
 		if i != 1 || len(guess.word) == 0 {
-			guess = get_optimal_guess(candidates, wordlist)
+			guess, _ = get_optimal_guess(candidates, wordlist)
 		}
 	}
 
@@ -95,7 +95,7 @@ func interactive_game(wordlist []string, cache func([]byte) string) {
 			break
 		}
 
-		suggestion := get_optimal_guess(candidates, wordlist)
+		suggestion, _ := get_optimal_guess(candidates, wordlist)
 		fmt.Printf("You should guess %s\n", suggestion.word)
 	}
 
