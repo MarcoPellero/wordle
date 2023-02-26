@@ -35,6 +35,8 @@ type Server struct {
 	mutex    sync.Mutex
 }
 
+var cache func([]byte) string
+
 func dump_wordlist(wordlist []string, path string) {
 	file, err := os.Create(path)
 	if err != nil {
@@ -167,7 +169,7 @@ func (server *Server) guess(res http.ResponseWriter, req *http.Request) {
 	server.mutex.Unlock()
 
 	var next_guess Guess
-	if false && last_guess == "sarti" {
+	if last_guess == "sarti" {
 		next_guess.word = cache([]byte(pattern))
 	} else {
 		var err error
@@ -177,12 +179,14 @@ func (server *Server) guess(res http.ResponseWriter, req *http.Request) {
 			return
 		}
 	}
+
 	res.Write([]byte(next_guess.word))
 	fmt.Printf("/guess %s [%f] [%d solutions]\n", next_guess.word, next_guess.entropy, len(candidates))
 }
 
-func bot_server(wordlist_path string) {
+func bot_server(wordlist_path string, cache_path string) {
 	server := Server{read_wordlist(wordlist_path), make(map[uuid.UUID]Session), sync.Mutex{}}
+	cache = build_cache(cache_path)
 
 	http.HandleFunc("/spawn", server.spawn)
 	http.HandleFunc("/kill", server.kill)
@@ -237,7 +241,7 @@ func filter_wordlist_server(wordlist_path string) {
 		}
 		server.mutex.Unlock()
 
-		fmt.Printf("[%d] [%d]\r", len(server.sessions), len(server.wordlist))
+		fmt.Printf("[%d] [%d]         \r", len(server.sessions), len(server.wordlist))
 		dump_wordlist(server.wordlist, wordlist_path)
 		time.Sleep(100 * time.Millisecond)
 	}
