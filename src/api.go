@@ -87,7 +87,7 @@ func (server *Server) kill(res http.ResponseWriter, req *http.Request) {
 
 func (server *Server) remove(res http.ResponseWriter, req *http.Request) {
 	bad_word := req.URL.Query().Get("word")
-	if bad_word == "" {
+	if len(bad_word) != len(server.wordlist[0]) {
 		res.WriteHeader(400)
 		return
 	}
@@ -130,7 +130,7 @@ func (server *Server) remove(res http.ResponseWriter, req *http.Request) {
 
 func (server *Server) add(res http.ResponseWriter, req *http.Request) {
 	new_word := req.URL.Query().Get("word")
-	if new_word == "" || len(new_word) != len(server.wordlist[0]) {
+	if len(new_word) != len(server.wordlist[0]) {
 		res.WriteHeader(400)
 		return
 	}
@@ -212,7 +212,8 @@ func bot_server(wordlist_path string, cache_path string) {
 
 func filter_wordlist_server(wordlist_path string) {
 	server := Server{read_wordlist(wordlist_path), make(map[uuid.UUID]Session), sync.Mutex{}}
-	filter_idx := 0
+	filteredWorlist := make([]string, len(server.wordlist))
+	copy(filteredWorlist, server.wordlist)
 
 	http.HandleFunc("/spawn", func(w http.ResponseWriter, r *http.Request) {
 		http.SetCookie(w, &http.Cookie{Name: "session-id", Value: "filter-wordlist"})
@@ -220,29 +221,52 @@ func filter_wordlist_server(wordlist_path string) {
 	})
 
 	http.HandleFunc("/kill", func(w http.ResponseWriter, r *http.Request) {})
+	http.HandleFunc("/remove", func(res http.ResponseWriter, req *http.Request) {
+		bad_word := req.URL.Query().Get("word")
+		if len(bad_word) != len(filteredWorlist[0]) {
+			res.WriteHeader(400)
+			return
+		}
 
-	http.HandleFunc("/remove", server.remove)
+		server.mutex.Lock()
+		defer server.mutex.Unlock()
+		was_found := false
+		for i, x := range filteredWorlist {
+			if bad_word == x {
+				filteredWorlist[i] = filteredWorlist[len(filteredWorlist)-1]
+				filteredWorlist = filteredWorlist[:len(filteredWorlist)-1]
+				was_found = true
+				break
+			}
+		}
+
+		if was_found {
+			fmt.Printf("/remove %s\n", bad_word)
+		}
+	})
+
 	http.HandleFunc("/add", server.add)
 	http.HandleFunc("/guess", func(w http.ResponseWriter, r *http.Request) {
 		server.mutex.Lock()
 		defer server.mutex.Unlock()
 
-		w.Write([]byte(server.wordlist[filter_idx]))
-		filter_idx++
+		w.Write([]byte(server.wordlist[0]))
+		fmt.Printf("/guess (/test) %s\n", server.wordlist[0])
+		server.wordlist = server.wordlist[1:]
 	})
 	go http.ListenAndServe(":8081", nil)
 
 	for {
 		server.mutex.Lock()
 		for uuid, session := range server.sessions {
-			if time.Since(session.created_at) >= 2*time.Minute {
+			if time.Since(session.created_at) >= 30*time.Second {
 				delete(server.sessions, uuid)
 			}
 		}
 		server.mutex.Unlock()
 
-		fmt.Printf("[%d] [%d]         \r", len(server.sessions), len(server.wordlist))
-		dump_wordlist(server.wordlist, wordlist_path)
+		fmt.Printf("[%d] [%d] [%d]        \r", len(server.sessions), len(server.wordlist), len(filteredWorlist))
+		dump_wordlist(filteredWorlist, wordlist_path+"_filtered")
 		time.Sleep(100 * time.Millisecond)
 	}
 }
