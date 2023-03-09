@@ -150,7 +150,7 @@ func get_optimal_guess(candidates, wordlist []string) (Guess, error) {
 	if len(candidates) == 1 {
 		return Guess{candidates[0], 0}, nil
 	} else if len(candidates) == 0 {
-		return Guess{}, errors.New("Unknown word")
+		return Guess{}, errors.New("unknown word")
 	}
 
 	jobs := make(chan int, len(wordlist))

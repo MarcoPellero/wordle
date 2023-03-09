@@ -30,12 +30,12 @@ type Session struct {
 }
 
 type Server struct {
-	wordlist []string
-	sessions map[uuid.UUID]Session
-	mutex    sync.Mutex
+	solutions []string
+	guesses   []string
+	cache     func([]byte) string
+	sessions  map[uuid.UUID]Session
+	mutex     sync.Mutex
 }
-
-var cache func([]byte) string
 
 func dump_wordlist(wordlist []string, path string) {
 	file, err := os.Create(path)
@@ -57,8 +57,8 @@ func dump_wordlist(wordlist []string, path string) {
 
 func (server *Server) spawn(res http.ResponseWriter, req *http.Request) {
 	new_uuid := uuid.New()
-	new_session := Session{make([]string, len(server.wordlist)), time.Now()}
-	copy(new_session.candidates, server.wordlist)
+	new_session := Session{make([]string, len(server.solutions)), time.Now()}
+	copy(new_session.candidates, server.solutions)
 
 	server.mutex.Lock()
 	server.sessions[new_uuid] = new_session
@@ -87,16 +87,16 @@ func (server *Server) kill(res http.ResponseWriter, req *http.Request) {
 
 func (server *Server) remove(res http.ResponseWriter, req *http.Request) {
 	bad_word := req.URL.Query().Get("word")
-	if len(bad_word) != len(server.wordlist[0]) {
+	if len(bad_word) != len(server.solutions[0]) {
 		res.WriteHeader(400)
 		return
 	}
 
 	was_found := false
-	for i, x := range server.wordlist {
+	for i, x := range server.solutions {
 		if bad_word == x {
-			server.wordlist[i] = server.wordlist[len(server.wordlist)-1]
-			server.wordlist = server.wordlist[:len(server.wordlist)-1]
+			server.solutions[i] = server.solutions[len(server.solutions)-1]
+			server.solutions = server.solutions[:len(server.solutions)-1]
 			was_found = true
 			break
 		}
@@ -130,13 +130,13 @@ func (server *Server) remove(res http.ResponseWriter, req *http.Request) {
 
 func (server *Server) add(res http.ResponseWriter, req *http.Request) {
 	new_word := req.URL.Query().Get("word")
-	if len(new_word) != len(server.wordlist[0]) {
+	if len(new_word) != len(server.solutions[0]) {
 		res.WriteHeader(400)
 		return
 	}
 
-	if !slices.Contains(server.wordlist, new_word) {
-		server.wordlist = append(server.wordlist, new_word)
+	if !slices.Contains(server.solutions, new_word) {
+		server.solutions = append(server.solutions, new_word)
 	}
 
 	res.WriteHeader(200)
@@ -157,7 +157,7 @@ func (server *Server) guess(res http.ResponseWriter, req *http.Request) {
 
 	last_guess := req.URL.Query().Get("guess")
 	pattern := req.URL.Query().Get("pattern")
-	if len(last_guess) != len(server.wordlist[0]) || len(pattern) != len(server.wordlist[0]) {
+	if len(last_guess) != len(server.solutions[0]) || len(pattern) != len(server.solutions[0]) {
 		res.WriteHeader(400)
 		return
 	}
@@ -170,10 +170,10 @@ func (server *Server) guess(res http.ResponseWriter, req *http.Request) {
 
 	var next_guess Guess
 	if last_guess == "sarti" {
-		next_guess.word = cache([]byte(pattern))
+		next_guess.word = server.cache([]byte(pattern))
 	} else {
 		var err error
-		next_guess, err = get_optimal_guess(candidates, server.wordlist)
+		next_guess, err = get_optimal_guess(candidates, server.guesses)
 		if err != nil {
 			res.WriteHeader(500)
 			return
@@ -184,9 +184,11 @@ func (server *Server) guess(res http.ResponseWriter, req *http.Request) {
 	fmt.Printf("/guess %s [%f] [%d solutions]\n", next_guess.word, next_guess.entropy, len(candidates))
 }
 
-func bot_server(wordlist_path string, cache_path string) {
-	server := Server{read_wordlist(wordlist_path), make(map[uuid.UUID]Session), sync.Mutex{}}
-	cache = build_cache(cache_path)
+func bot_server(solutions_path, guesses_path, cache_path string) {
+	solutions := read_wordlist(solutions_path)
+	guesses := read_wordlist(guesses_path)
+	cache := build_cache(cache_path)
+	server := Server{solutions, guesses, cache, make(map[uuid.UUID]Session), sync.Mutex{}}
 
 	http.HandleFunc("/spawn", server.spawn)
 	http.HandleFunc("/kill", server.kill)
@@ -204,16 +206,16 @@ func bot_server(wordlist_path string, cache_path string) {
 		}
 		server.mutex.Unlock()
 
-		fmt.Printf("[%d] [%d]\r", len(server.sessions), len(server.wordlist))
-		dump_wordlist(server.wordlist, wordlist_path)
+		fmt.Printf("[%d] [%d] [%d]\r", len(server.sessions), len(server.solutions), len(server.guesses))
+		dump_wordlist(server.solutions, solutions_path)
 		time.Sleep(100 * time.Millisecond)
 	}
 }
 
-func filter_wordlist_server(wordlist_path string) {
-	server := Server{read_wordlist(wordlist_path), make(map[uuid.UUID]Session), sync.Mutex{}}
-	filteredWorlist := make([]string, len(server.wordlist))
-	copy(filteredWorlist, server.wordlist)
+func filter_wordlist_server(solutions_path string) {
+	server := Server{read_wordlist(solutions_path), []string{}, func(b []byte) string { return "" }, make(map[uuid.UUID]Session), sync.Mutex{}}
+	filteredWorlist := make([]string, len(server.solutions))
+	copy(filteredWorlist, server.solutions)
 
 	http.HandleFunc("/spawn", func(w http.ResponseWriter, r *http.Request) {
 		http.SetCookie(w, &http.Cookie{Name: "session-id", Value: "filter-wordlist"})
@@ -250,9 +252,9 @@ func filter_wordlist_server(wordlist_path string) {
 		server.mutex.Lock()
 		defer server.mutex.Unlock()
 
-		w.Write([]byte(server.wordlist[0]))
-		fmt.Printf("/guess (/test) %s\n", server.wordlist[0])
-		server.wordlist = server.wordlist[1:]
+		w.Write([]byte(server.solutions[0]))
+		fmt.Printf("/guess (/test) %s\n", server.solutions[0])
+		server.solutions = server.solutions[1:]
 	})
 	go http.ListenAndServe(":8081", nil)
 
@@ -265,8 +267,8 @@ func filter_wordlist_server(wordlist_path string) {
 		}
 		server.mutex.Unlock()
 
-		fmt.Printf("[%d] [%d] [%d]        \r", len(server.sessions), len(server.wordlist), len(filteredWorlist))
-		dump_wordlist(filteredWorlist, wordlist_path+"_filtered")
+		fmt.Printf("[%d] [%d] [%d]        \r", len(server.sessions), len(server.solutions), len(filteredWorlist))
+		dump_wordlist(filteredWorlist, solutions_path+"_filtered")
 		time.Sleep(100 * time.Millisecond)
 	}
 }

@@ -9,7 +9,7 @@ import (
 
 // FORMAT [2 bytes: word length][2 bytes: number of words][word 1][word 2][word 3]
 
-func store_cache(wordlist []string, path, first_guess string) {
+func store_cache(solutions, guesses []string, path, first_guess string) {
 	file, err := os.Create(path)
 	if err != nil {
 		panic(fmt.Sprintf("Couldn't create cache file at %s", path))
@@ -17,10 +17,10 @@ func store_cache(wordlist []string, path, first_guess string) {
 	defer file.Close()
 
 	buf_uint16 := make([]byte, 2)
-	word_len := len(wordlist[0])
+	word_len := len(solutions[0])
 	binary.LittleEndian.PutUint16(buf_uint16, uint16(word_len))
 	file.Write(buf_uint16)
-	binary.LittleEndian.PutUint16(buf_uint16, uint16(len(wordlist)))
+	binary.LittleEndian.PutUint16(buf_uint16, uint16(len(solutions)))
 	file.Write(buf_uint16)
 
 	pattern := bytes.Repeat([]byte{'b'}, word_len)
@@ -29,10 +29,10 @@ func store_cache(wordlist []string, path, first_guess string) {
 	for color_counter[0] != word_len {
 		is_valid := false
 		if color_counter[0] != word_len-1 || color_counter[1] != 1 {
-			candidates := get_candidates(wordlist, first_guess, pattern)
+			candidates := get_candidates(solutions, first_guess, pattern)
 			if len(candidates) != 0 {
 				is_valid = true
-				optimal_guess, _ := get_optimal_guess(candidates, wordlist)
+				optimal_guess, _ := get_optimal_guess(candidates, guesses)
 				file.WriteString(optimal_guess.word)
 			}
 		}

@@ -46,11 +46,11 @@ func read_wordlist(path string) []string {
 	return strings.Split(string(data), "\n")
 }
 
-func play_single_word(wordlist []string, cache func([]byte) string, first_guess, hidden string) int {
+func play_single_word(solutions, guesses []string, cache func([]byte) string, first_guess, hidden string) int {
 	guess := Guess{first_guess, -1}
 	var pattern []byte
-	candidates := make([]string, len(wordlist))
-	copy(candidates, wordlist)
+	candidates := make([]string, len(solutions))
+	copy(candidates, solutions)
 
 	for i := 1; true; i++ {
 		pattern = get_pattern(guess.word, hidden)
@@ -64,21 +64,21 @@ func play_single_word(wordlist []string, cache func([]byte) string, first_guess,
 		}
 
 		if i != 1 || len(guess.word) == 0 {
-			guess, _ = get_optimal_guess(candidates, wordlist)
+			guess, _ = get_optimal_guess(candidates, guesses)
 		}
 	}
 
 	panic("Unreachable return statement")
 }
 
-func interactive_game(wordlist []string, cache func([]byte) string) {
-	candidates := make([]string, len(wordlist))
-	copy(candidates, wordlist)
+func interactive_game(solutions, guesses []string, cache func([]byte) string) {
+	candidates := make([]string, len(solutions))
+	copy(candidates, solutions)
 
 	var guess string
 	var pattern []byte
-	var guesses int
-	for guesses = 0; ; guesses++ {
+	var n_guesses int
+	for n_guesses = 0; ; n_guesses++ {
 		fmt.Print("Guess: ")
 		fmt.Scanln(&guess)
 		fmt.Print("Pattern: ")
@@ -91,39 +91,41 @@ func interactive_game(wordlist []string, cache func([]byte) string) {
 		candidates = get_candidates(candidates, guess, pattern)
 		if len(candidates) == 1 {
 			fmt.Printf("The hidden word is %s!\n", candidates[0])
-			guesses += 2
+			n_guesses += 2
 			break
 		}
 
-		suggestion, _ := get_optimal_guess(candidates, wordlist)
+		suggestion, _ := get_optimal_guess(candidates, guesses)
 		fmt.Printf("You should guess %s\n", suggestion.word)
 	}
 
-	fmt.Printf("Success! solved in %d guesses\n", guesses)
+	fmt.Printf("Success! solved in %d guesses\n", n_guesses)
 }
 
-func play_dictionary(wordlist []string, cache func([]byte) string, first_guess string) float64 {
+func play_dictionary(solutions, guesses []string, cache func([]byte) string, first_guess string) float64 {
 	total_guesses := 0
 
-	for i, word := range wordlist {
-		guesses := play_single_word(wordlist, cache, first_guess, word)
+	for i, word := range solutions {
+		guesses := play_single_word(solutions, guesses, cache, first_guess, word)
 		total_guesses += guesses
-		fmt.Printf("[%d / %d] %s: %d\n", i, len(wordlist), word, guesses)
+		fmt.Printf("[%d / %d] %s: %d\n", i, len(solutions), word, guesses)
 	}
 
-	return float64(total_guesses) / float64(len(wordlist))
+	return float64(total_guesses) / float64(len(solutions))
 }
 
 func main() {
 	first_guess := "sarti"
+	solutions_path := "../wordlists/guesses"
+	guesses_path := "../wordlists/guesses"
 
-	wordlist_path := "../wordlists/adaptive"
-	wordlist := read_wordlist(wordlist_path)
+	solutions := read_wordlist(solutions_path)
+	guesses := read_wordlist(guesses_path)
 
 	cache_path := "../data/cache1"
 	if _, err := os.Stat(cache_path); err != nil {
 		fmt.Println("Generating cache, wait...")
-		store_cache(wordlist, cache_path, first_guess)
+		store_cache(solutions, guesses, cache_path, first_guess)
 	}
 	cache := build_cache(cache_path)
 
@@ -140,15 +142,15 @@ func main() {
 		}
 
 		for i := 0; i < num_of_runs; i++ {
-			mean := play_dictionary(wordlist, cache, first_guess)
+			mean := play_dictionary(solutions, guesses, cache, first_guess)
 			fmt.Printf("[%d] Solved words in, on average, %f guesses\n", i, mean)
 		}
 	} else if os.Args[1] == "-interactive" {
-		interactive_game(wordlist, cache)
+		interactive_game(solutions, guesses, cache)
 	} else if os.Args[1] == "-api" {
-		bot_server(wordlist_path, cache_path)
+		bot_server(solutions_path, guesses_path, cache_path)
 	} else if os.Args[1] == "-filter-wordlist" {
-		filter_wordlist_server(wordlist_path)
+		filter_wordlist_server(solutions_path)
 	} else {
 		fmt.Println("Invalid parameter! Use dictionary or interactive")
 	}
