@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/MarcoPellero/wordle-gopher/src/solver"
+	"github.com/MarcoPellero/wordle/src/solver"
 )
 
 func interactive(guesses, solutions solver.Words) int {
