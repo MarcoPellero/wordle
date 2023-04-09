@@ -1,3 +1,3 @@
-module github.com/MarcoPellero/wordle-gopher
+module github.com/MarcoPellero/wordle
 
 go 1.19
