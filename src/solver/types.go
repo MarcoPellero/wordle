@@ -15,15 +15,6 @@ type CharState = uint8
 type Feedback []CharState
 type Words = []string
 
-func (fd *Feedback) Legal() bool {
-	counter := [3]int{0, 0, 0}
-	for _, c := range *fd {
-		counter[c]++
-	}
-
-	return counter[Green] != len(*fd)-1 || counter[Yellow] != 1
-}
-
 func (fd *Feedback) Next() bool {
 	var i int
 	for i = 0; i < len(*fd); i++ {

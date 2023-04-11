@@ -2,6 +2,7 @@ package solver
 
 import (
 	"encoding/gob"
+	"fmt"
 	"os"
 )
 
@@ -19,19 +20,13 @@ func (c *Cache) Build(guesses, oldSolutions Words, depth int) {
 	c.NextLayer = &[]Cache{}
 
 	for i := 0; true; i++ {
-		valid := fd.Legal()
-		if valid {
-			solutions := FilterSolutions(oldSolutions, c.Word, fd)
-			guess, _, err := ChooseGuess(guesses, solutions)
+		solutions := FilterSolutions(oldSolutions, c.Word, fd)
 
-			valid = err == nil
-			if valid {
-				*c.NextLayer = append(*c.NextLayer, Cache{guess, nil})
-				(*c.NextLayer)[i].Build(guesses, solutions, depth-1)
-			}
-		}
-
-		if !valid {
+		guess, _, err := ChooseGuess(guesses, solutions)
+		if err == nil {
+			*c.NextLayer = append(*c.NextLayer, Cache{guess, nil})
+			(*c.NextLayer)[i].Build(guesses, solutions, depth-1)
+		} else {
 			*c.NextLayer = append(*c.NextLayer, Cache{"", nil})
 		}
 
@@ -44,12 +39,12 @@ func (c *Cache) Build(guesses, oldSolutions Words, depth int) {
 func (c *Cache) Dump(path string) error {
 	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
-		return err
+		return fmt.Errorf("Cache.Dump: %s", err.Error())
 	}
 
 	g := gob.NewEncoder(f)
 	if err = g.Encode(c); err != nil {
-		return err
+		return fmt.Errorf("Cache.Dump: %s", err.Error())
 	}
 	return nil
 }
@@ -57,13 +52,13 @@ func (c *Cache) Dump(path string) error {
 func ReadCache(path string) (Cache, error) {
 	f, err := os.Open(path)
 	if err != nil {
-		return Cache{}, err
+		return Cache{}, fmt.Errorf("ReadCache: %s", err.Error())
 	}
 
 	var buf Cache
 	g := gob.NewDecoder(f)
 	if err = g.Decode(&buf); err != nil {
-		return Cache{}, err
+		return Cache{}, fmt.Errorf("ReadCache: %s", err.Error())
 	}
 	return buf, nil
 }

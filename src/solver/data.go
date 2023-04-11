@@ -14,12 +14,12 @@ var ErrEmptyWords = errors.New("the words file was empty")
 func ReadWords(path string) (Words, error) {
 	f, err := os.Open(path)
 	if err != nil {
-		return nil, fmt.Errorf("ReadWords: failed to open file: %v", err)
+		return nil, fmt.Errorf("ReadWords: failed to open file: %s", err.Error())
 	}
 
 	rawB, err := io.ReadAll(f)
 	if err != nil {
-		return nil, fmt.Errorf("ReadWords: failed to read from file: %v", err)
+		return nil, fmt.Errorf("ReadWords: failed to read from file: %s", err.Error())
 	}
 
 	for rawB[len(rawB)-1] == '\n' {

@@ -9,7 +9,7 @@ var ErrNoSolutions = errors.New("there are no possible solutions")
 
 func FilterSolutions(solutions Words, guess string, fd Feedback) Words {
 	if fd.Won() {
-		return Words{guess}
+		return Words{}
 	}
 
 	filtered := make(Words, 0)
@@ -24,7 +24,7 @@ func FilterSolutions(solutions Words, guess string, fd Feedback) Words {
 
 func CountSolutions(solutions Words, guess string, fd Feedback) int {
 	if fd.Won() {
-		return 1
+		return 0
 	}
 
 	filtered := 0
@@ -49,15 +49,9 @@ func entropyFormula(oldSolutions, newSolutions int) float64 {
 func RateGuess(guesses Words, oldSolutions Words, guess string) float64 {
 	info := 0.0
 	fd := make(Feedback, len(guess))
-	for !fd.Won() {
-		if !fd.Legal() {
-			fd.Next()
-			continue
-		}
-
+	for !fd.Won() { // this DOES ignore 'GGGGG', but that fd has info=0 anyway
 		solutionsLeft := CountSolutions(oldSolutions, guess, fd)
 		info += entropyFormula(len(oldSolutions), solutionsLeft)
-
 		fd.Next()
 	}
 

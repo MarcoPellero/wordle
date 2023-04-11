@@ -6,14 +6,13 @@ import (
 
 func SimulateGame(guesses, solutions Words, c Cache, hidden string) (int, error) {
 	var guess string
-	var err error
+	var err error = nil
 	var cacheConsumed = false
 
 	for i := 1; true; i++ {
 		if !cacheConsumed {
 			guess = c.Word
 			cacheConsumed = true
-			err = nil
 		} else {
 			guess, _, err = ChooseGuess(guesses, solutions)
 		}
@@ -23,15 +22,14 @@ func SimulateGame(guesses, solutions Words, c Cache, hidden string) (int, error)
 		}
 
 		fd := GenerateFeedback(guess, hidden)
-		if c.NextLayer != nil {
-			cacheConsumed = false
-			c = (*c.NextLayer)[fd.Hash()]
-		}
-
 		if fd.Won() {
 			return i, nil
 		}
 
+		if c.NextLayer != nil {
+			cacheConsumed = false
+			c = (*c.NextLayer)[fd.Hash()]
+		}
 		solutions = FilterSolutions(solutions, guess, fd)
 	}
 
