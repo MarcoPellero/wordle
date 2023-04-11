@@ -38,12 +38,20 @@ func SimulateGame(guesses, solutions Words, c Cache, hidden string) (int, error)
 
 func PlayAll(guesses, solutions Words, c Cache) float64 {
 	sum := 0
+	results := make(chan int)
+
 	for _, word := range solutions {
-		x, err := SimulateGame(guesses, solutions, c, word)
-		if err != nil {
-			panic(err)
-		}
-		sum += x
+		go func(word string) {
+			x, err := SimulateGame(guesses, solutions, c, word)
+			if err != nil {
+				panic(err)
+			}
+			results <- x
+		}(word)
+	}
+
+	for range solutions {
+		sum += <-results
 	}
 
 	return float64(sum) / float64(len(solutions))
