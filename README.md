@@ -9,9 +9,9 @@ I'll write this later :P
 ## How it works
 The basic concepts are the same as 3b1b's algorithm, but the implementation is totally different, mostly because i couldn't understand his code to adapt it.
 
-It goes like this: to choose the best guess i look at each possible one concurrently, and for each guess i look at each possible feedback (the colors), i see how many solutions would be left if i guessed that word and got that feedback, i apply the entropy formula (`-px * log2(px)`) on the ratio of solutions left to solutions now, and i sum all of those values for all feedbacks, then i take the guess that maximizes this sum.
+It goes like this: to choose the best guess i look at each possible one concurrently, and for each guess i look at each possible feedback (the colors), i see how many solutions would be left if i guessed that word and got that feedback, i apply the entropy formula (`-n log n`) on the ratio of solutions left to solutions now, and i sum all of those values for all feedbacks, then i take the guess that maximizes this sum.
 
-That's it! That's the algorithm! Except... this is extremely slow, i perform `(N guesses) * 3^5 * (N solutions)` operations to find the best guess, so how can i speed this up as well as lighten the CPU load for real-time use? Well, the only thing i can reduce is that `N solutions` and make some assumptions to eliminate that `N guesses` (That's to say, i hardcoded the first guess).
+That's it! That's the algorithm! Except... this is extremely slow, i perform `(N guesses) * 3^(Word length) * (N solutions)` operations to find the best guess, so how can i speed this up as well as lighten the CPU load for real-time use? Well, the only thing i can reduce is that `N solutions` and make some assumptions to eliminate that `N guesses` (That's to say, i hardcoded the first guess).
 
 Basically, i precompute the heaviest calculations, that is, i generate a cache which tells me *"if i guess this word, and i get this feedback, the next best guess is ..."*. You can adjust the depth of this cache in code, but i've found that a 1 layer cache takes a simulation from unbearably long to like 15s, 2 layes takes it down to .7s, and 3 layers takes it down to .2s.
 
