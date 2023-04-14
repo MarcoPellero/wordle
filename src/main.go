@@ -14,14 +14,7 @@ import (
 )
 
 func interactive(guesses, solutions solver.Words) int {
-	wordLen := 5
-
-	var buf int
-	fmt.Printf("Enter word length, or nothing for %d: ", wordLen)
-	if n, _ := fmt.Scanln(&buf); n > 0 {
-		wordLen = buf
-	}
-
+	wordLen := len(guesses[0])
 	var guess, fdBuf string
 	for i := 1; true; i++ {
 		for {
