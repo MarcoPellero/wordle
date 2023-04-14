@@ -5,11 +5,12 @@ import (
 )
 
 func SimulateGame(guesses, solutions Words, c Cache, hidden string) (int, error) {
-	var guess string
-	var err error = nil
 	var cacheConsumed = false
 
 	for i := 1; true; i++ {
+		var guess string
+		var err error
+
 		if !cacheConsumed {
 			guess = c.Word
 			cacheConsumed = true
@@ -22,9 +23,9 @@ func SimulateGame(guesses, solutions Words, c Cache, hidden string) (int, error)
 			return i, nil
 		}
 
-		if c.NextLayer != nil {
+		if len(c.NextLayer) != 0 {
 			cacheConsumed = false
-			c = (*c.NextLayer)[fd.Hash()]
+			c = c.NextLayer[fd.Hash()]
 		}
 		solutions = FilterSolutions(solutions, guess, fd)
 	}
@@ -33,9 +34,7 @@ func SimulateGame(guesses, solutions Words, c Cache, hidden string) (int, error)
 }
 
 func PlayAll(guesses, solutions Words, c Cache) float64 {
-	sum := 0
 	results := make(chan int)
-
 	for _, word := range solutions {
 		go func(word string) {
 			x, err := SimulateGame(guesses, solutions, c, word)
@@ -46,6 +45,7 @@ func PlayAll(guesses, solutions Words, c Cache) float64 {
 		}(word)
 	}
 
+	sum := 0
 	for range solutions {
 		sum += <-results
 	}

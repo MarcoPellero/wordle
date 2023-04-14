@@ -22,7 +22,7 @@ func ReadWords(path string) (Words, error) {
 		return nil, fmt.Errorf("ReadWords: failed to read from file: %s", err.Error())
 	}
 
-	for rawB[len(rawB)-1] == '\n' {
+	for len(rawB) > 0 && rawB[len(rawB)-1] == '\n' {
 		rawB = rawB[:len(rawB)-1]
 	}
 

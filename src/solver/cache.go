@@ -8,7 +8,7 @@ import (
 
 type Cache struct {
 	Word      string
-	NextLayer *[]Cache
+	NextLayer []Cache
 }
 
 func (c *Cache) Build(guesses, oldSolutions Words, depth int) {
@@ -17,22 +17,19 @@ func (c *Cache) Build(guesses, oldSolutions Words, depth int) {
 	}
 
 	fd := make(Feedback, len(c.Word))
-	c.NextLayer = &[]Cache{}
+	c.NextLayer = make([]Cache, 0)
 
-	for i := 0; true; i++ {
+	for i := 0; !fd.Won(); i++ {
 		solutions := FilterSolutions(oldSolutions, c.Word, fd)
 
-		guess, _, err := ChooseGuess(guesses, solutions)
-		if err == nil {
-			*c.NextLayer = append(*c.NextLayer, Cache{guess, nil})
-			(*c.NextLayer)[i].Build(guesses, solutions, depth-1)
+		if guess, _, err := ChooseGuess(guesses, solutions); err == nil {
+			c.NextLayer = append(c.NextLayer, Cache{guess, nil})
+			(c.NextLayer)[i].Build(guesses, solutions, depth-1)
 		} else {
-			*c.NextLayer = append(*c.NextLayer, Cache{"", nil})
+			c.NextLayer = append(c.NextLayer, Cache{"", nil})
 		}
 
-		if fd.Next() {
-			break
-		}
+		fd.Next()
 	}
 }
 
