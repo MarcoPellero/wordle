@@ -13,11 +13,7 @@ func SimulateGame(guesses, solutions Words, c Cache, hidden string) (int, error)
 		if !cacheConsumed {
 			guess = c.Word
 			cacheConsumed = true
-		} else {
-			guess, _, err = ChooseGuess(guesses, solutions)
-		}
-
-		if err != nil {
+		} else if guess, _, err = ChooseGuess(guesses, solutions); err != nil {
 			return 0, fmt.Errorf("SimulateGame: %s", err.Error())
 		}
 
