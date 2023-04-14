@@ -22,21 +22,6 @@ func FilterSolutions(solutions Words, guess string, fd Feedback) Words {
 	return filtered
 }
 
-func CountSolutions(solutions Words, guess string, fd Feedback) int {
-	if fd.Won() {
-		return 0
-	}
-
-	filtered := 0
-	for _, word := range solutions {
-		if word != guess && fd.Match(guess, word) {
-			filtered++
-		}
-	}
-
-	return filtered
-}
-
 func entropyFormula(oldSolutions, newSolutions int) float64 {
 	if newSolutions == 0 {
 		return 0
