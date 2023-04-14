@@ -173,6 +173,26 @@ func remoteWorker(endpoint string, guesses, solutions solver.Words) {
 	}
 }
 
+func localWorker(guesses, solutions solver.Words) []float64 {
+	results := make([]float64, len(guesses))
+	var wg sync.WaitGroup
+
+	for i := range guesses {
+		wg.Add(1)
+		go func(idx int) {
+			var c solver.Cache
+			c.Word = guesses[idx]
+			c.Build(guesses, solutions, 3)
+			results[idx] = solver.PlayAll(guesses, solutions, c)
+			fmt.Printf("%d (%s) = %.3f\n", idx, guesses[idx], results[idx])
+			wg.Done()
+		}(i)
+	}
+
+	wg.Wait()
+	return results
+}
+
 func main() {
 	guesses, _ := solver.ReadWords("../data/wordlists/guesses.txt")
 
@@ -196,7 +216,7 @@ func main() {
 		url := os.Args[len(os.Args)-1]
 		fmt.Printf("Running worker for %s\n", url)
 		remoteWorker(url, guesses, guesses)
-	} else if slices.Contains(os.Args, "simulate") {
+	} else if slices.Contains(os.Args, "play-all") {
 		path := fmt.Sprintf("../data/caches/%d", len(guesses[0]))
 		c, err := solver.ReadCache(path)
 		if err != nil {
@@ -209,6 +229,16 @@ func main() {
 		fmt.Println("Running simulation")
 		mean := solver.PlayAll(guesses, guesses, c)
 		fmt.Printf("Solved any one word in on avg %.2f guesses\n", mean)
+	} else if slices.Contains(os.Args, "local-simulation") {
+		results := localWorker(guesses, guesses)
+		best := 0
+		for i := range results {
+			if results[i] > results[best] {
+				best = i
+			}
+		}
+
+		fmt.Printf("Best: %d (%s), avg. %.4f\n", best, guesses[best], results[best])
 	} else {
 		fmt.Printf("Unknown command")
 	}
