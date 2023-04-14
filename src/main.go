@@ -137,7 +137,7 @@ func loadBalancer(port int, guesses solver.Words, outFile string) []float64 {
 	return results
 }
 
-func remoteSlave(endpoint string, guesses, solutions solver.Words) {
+func remoteWorker(endpoint string, guesses, solutions solver.Words) {
 	for {
 		res, err := http.Get(endpoint + "/work")
 		if err != nil {
@@ -174,7 +174,7 @@ func remoteSlave(endpoint string, guesses, solutions solver.Words) {
 }
 
 func main() {
-	guesses, _ := solver.ReadWords("../data/wordlists/length6.txt")
+	guesses, _ := solver.ReadWords("../data/wordlists/guesses.txt")
 
 	if slices.Contains(os.Args, "serve") {
 		var port int
@@ -192,10 +192,10 @@ func main() {
 		}
 
 		fmt.Printf("Best: %d %s | %.3f\n", best, guesses[best], results[best])
-	} else if slices.Contains(os.Args, "slave") {
+	} else if slices.Contains(os.Args, "worker") {
 		url := os.Args[len(os.Args)-1]
-		fmt.Printf("Running slave for %s\n", url)
-		remoteSlave(url, guesses, guesses)
+		fmt.Printf("Running worker for %s\n", url)
+		remoteWorker(url, guesses, guesses)
 	} else if slices.Contains(os.Args, "simulate") {
 		path := fmt.Sprintf("../data/caches/%d", len(guesses[0]))
 		c, err := solver.ReadCache(path)
