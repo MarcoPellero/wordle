@@ -59,11 +59,26 @@ func ChooseGuess(guesses, solutions Words) (string, float64, error) {
 		Rating float64
 	}
 
-	results := make(chan Result)
+	jobs := make(chan int, len(guesses)+1)
+	results := make(chan Result, len(guesses))
 	for i := range guesses {
-		go func(idx int) {
-			results <- Result{idx, RateGuess(guesses, solutions, guesses[idx])}
-		}(i)
+		jobs <- i
+	}
+	jobs <- -1
+
+	for i := 0; i < 100; i++ {
+		go func() {
+			for {
+				idx := <-jobs
+				if idx == -1 {
+					jobs <- -1
+					return
+				}
+
+				rating := RateGuess(guesses, solutions, guesses[idx])
+				results <- Result{idx, rating}
+			}
+		}()
 	}
 
 	best := Result{0, -1}

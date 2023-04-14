@@ -34,15 +34,29 @@ func SimulateGame(guesses, solutions Words, c Cache, hidden string) (int, error)
 }
 
 func PlayAll(guesses, solutions Words, c Cache) float64 {
-	results := make(chan int)
-	for _, word := range solutions {
-		go func(word string) {
-			x, err := SimulateGame(guesses, solutions, c, word)
-			if err != nil {
-				panic(err)
+	jobs := make(chan int, len(solutions)+1)
+	results := make(chan int, len(solutions))
+	for i := range solutions {
+		jobs <- i
+	}
+	jobs <- -1
+
+	for i := 0; i < 100; i++ {
+		go func() {
+			for {
+				idx := <-jobs
+				if idx == -1 {
+					jobs <- -1
+					return
+				}
+
+				x, err := SimulateGame(guesses, solutions, c, solutions[idx])
+				if err != nil {
+					panic(err)
+				}
+				results <- x
 			}
-			results <- x
-		}(word)
+		}()
 	}
 
 	sum := 0
