@@ -174,19 +174,31 @@ func remoteWorker(endpoint string, guesses, solutions solver.Words) {
 }
 
 func localWorker(guesses, solutions solver.Words) []float64 {
+	jobs := make(chan int, len(guesses)+1)
 	results := make([]float64, len(guesses))
 	var wg sync.WaitGroup
-
 	for i := range guesses {
 		wg.Add(1)
-		go func(idx int) {
+		jobs <- i
+	}
+	jobs <- -1
+
+	for i := 0; i < 10; i++ {
+		go func() {
 			var c solver.Cache
-			c.Word = guesses[idx]
-			c.Build(guesses, solutions, 3)
-			results[idx] = solver.PlayAll(guesses, solutions, c)
-			fmt.Printf("%d (%s) = %.3f\n", idx, guesses[idx], results[idx])
-			wg.Done()
-		}(i)
+			for {
+				idx := <-jobs
+				if idx == -1 {
+					jobs <- -1
+					return
+				}
+				c.Word = guesses[idx]
+				c.Build(guesses, solutions, 3)
+				results[idx] = solver.PlayAll(guesses, solutions, c)
+				fmt.Printf("%d (%s) = %.3f\n", idx, guesses[idx], results[idx])
+				wg.Done()
+			}
+		}()
 	}
 
 	wg.Wait()
