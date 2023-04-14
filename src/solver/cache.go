@@ -7,8 +7,8 @@ import (
 )
 
 type Cache struct {
-	Word      string   `json:"word"`
-	NextLayer *[]Cache `json:"next"`
+	Word      string
+	NextLayer *[]Cache
 }
 
 func (c *Cache) Build(guesses, oldSolutions Words, depth int) {
