@@ -48,27 +48,25 @@ func RateGuess(guesses Words, oldSolutions Words, guess string) float64 {
 func ChooseGuess(guesses, solutions Words) (string, float64, error) {
 	if len(solutions) == 0 {
 		return "", 0.0, ErrNoSolutions
-	}
-	if len(solutions) == 1 {
+	} else if len(solutions) == 1 {
 		return solutions[0], 0.0, nil
-	}
-	if len(solutions) == 2 { // coin flip!
+	} else if len(solutions) == 2 { // coin flip!
 		return solutions[0], 1, nil
 	}
 
-	type result struct {
+	type Result struct {
 		Idx    int
 		Rating float64
 	}
 
-	results := make(chan result)
+	results := make(chan Result)
 	for i := range guesses {
 		go func(idx int) {
-			results <- result{idx, RateGuess(guesses, solutions, guesses[idx])}
+			results <- Result{idx, RateGuess(guesses, solutions, guesses[idx])}
 		}(i)
 	}
 
-	best := result{0, -1}
+	best := Result{0, -1}
 	for i := 0; i < len(guesses); i++ {
 		x := <-results
 		if x.Rating > best.Rating || (x.Rating == best.Rating && x.Idx < best.Idx) {
