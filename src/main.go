@@ -200,7 +200,7 @@ func main() {
 		path := fmt.Sprintf("../data/caches/%d", len(guesses[0]))
 		c, err := solver.ReadCache(path)
 		if err != nil {
-			fmt.Printf("Generating cache")
+			fmt.Println("Generating cache")
 			c.Word = os.Args[len(os.Args)-1]
 			c.Build(guesses, guesses, 3)
 			c.Dump(path)
