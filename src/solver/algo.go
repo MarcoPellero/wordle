@@ -47,22 +47,16 @@ func entropyFormula(oldSolutions, newSolutions int) float64 {
 }
 
 func RateGuess(guesses Words, oldSolutions Words, guess string) float64 {
-	memo := make([]bool, len(oldSolutions))
-	info := 0.0
-	fd := make(Feedback, len(guess))
-	for !fd.Won() { // this DOES ignore 'GGGGG', but that fd has info=0 anyway
-		solutionsLeft := 0
-		for i, word := range oldSolutions {
-			if !memo[i] && word != guess && fd.Match(guess, word) {
-				memo[i] = true
-				solutionsLeft++
-			}
-		}
-
-		info += entropyFormula(len(oldSolutions), solutionsLeft)
-		fd.Next()
+	solutionsLeft := make([]int, int(math.Pow(3, float64(len(guess)))))
+	for _, word := range oldSolutions {
+		fd := GenerateFeedback(guess, word)
+		solutionsLeft[fd.Hash()]++
 	}
 
+	info := 0.0
+	for _, x := range solutionsLeft {
+		info += entropyFormula(len(oldSolutions), x)
+	}
 	return info
 }
 
