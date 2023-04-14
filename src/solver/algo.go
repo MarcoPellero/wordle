@@ -50,7 +50,7 @@ func ChooseGuess(guesses, solutions Words) (string, float64, error) {
 		return "", 0.0, ErrNoSolutions
 	} else if len(solutions) == 1 {
 		return solutions[0], 0.0, nil
-	} else if len(solutions) == 2 { // coin flip!
+	} else if len(solutions) <= 3 { // it's "mathematically" better to just do a coin flip on avg.
 		return solutions[0], 1, nil
 	}
 
