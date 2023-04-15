@@ -31,15 +31,18 @@ func entropyFormula(oldSolutions, newSolutions int) float64 {
 	return -px * math.Log2(px)
 }
 
-func RateGuess(guesses Words, oldSolutions Words, guess string) float64 {
-	solutionsLeft := make([]int, int(math.Pow(3, float64(len(guess)))))
+func RateGuess(guesses Words, oldSolutions Words, guess string, solsLeft []int) float64 {
+	for i := range solsLeft {
+		solsLeft[i] = 0
+	}
+
 	for _, word := range oldSolutions {
 		fd := GenerateFeedback(guess, word)
-		solutionsLeft[fd.Hash()]++
+		solsLeft[fd.Hash()]++
 	}
 
 	info := 0.0
-	for _, x := range solutionsLeft {
+	for _, x := range solsLeft {
 		info += entropyFormula(len(oldSolutions), x)
 	}
 	return info
@@ -66,8 +69,14 @@ func ChooseGuess(guesses, solutions Words) (string, float64, error) {
 	}
 	jobs <- -1
 
+	solsLeft := make([][]int, 100)
+	bufSize := int(math.Pow(3, float64(len(guesses[0]))))
+	for i := range solsLeft {
+		solsLeft[i] = make([]int, bufSize)
+	}
+
 	for i := 0; i < 100; i++ {
-		go func() {
+		go func(workerIdx int) {
 			for {
 				idx := <-jobs
 				if idx == -1 {
@@ -75,10 +84,10 @@ func ChooseGuess(guesses, solutions Words) (string, float64, error) {
 					return
 				}
 
-				rating := RateGuess(guesses, solutions, guesses[idx])
+				rating := RateGuess(guesses, solutions, guesses[idx], solsLeft[workerIdx])
 				results <- Result{idx, rating}
 			}
-		}()
+		}(i)
 	}
 
 	best := Result{0, -1}
