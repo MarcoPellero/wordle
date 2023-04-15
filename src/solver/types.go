@@ -119,7 +119,7 @@ func FdFromString(buf string) (Feedback, error) {
 	return fd, nil
 }
 
-func GenerateFeedback(guess, solution string) Feedback {
+func GenFeedback(guess, solution string) Feedback {
 	solAlpha := make([]uint8, 26)
 	for i := range solution {
 		solAlpha[solution[i]-'a']++
@@ -144,6 +144,39 @@ func GenerateFeedback(guess, solution string) Feedback {
 		} else {
 			fd[i] = Black
 		}
+	}
+
+	return fd
+}
+
+func GenFeedbackHash(guess, solution string) int {
+	solAlpha := make([]uint8, 26)
+	for i := range solution {
+		solAlpha[solution[i]-'a']++
+	}
+
+	fd := 0
+	mul := 1
+	for i := range solution {
+		if guess[i] == solution[i] {
+			fd += mul * 2
+			solAlpha[guess[i]-'a']--
+		}
+		mul *= 3
+	}
+
+	mul = 1
+	for i := range solution {
+		if guess[i] == solution[i] {
+			mul *= 3
+			continue
+		}
+
+		if solAlpha[guess[i]-'a'] > 0 {
+			fd += mul
+			solAlpha[guess[i]-'a']--
+		}
+		mul *= 3
 	}
 
 	return fd

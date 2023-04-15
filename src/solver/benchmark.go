@@ -18,7 +18,7 @@ func SimulateGame(guesses, solutions Words, c Cache, hidden string) (int, error)
 			return 0, fmt.Errorf("SimulateGame: %s", err.Error())
 		}
 
-		fd := GenerateFeedback(guess, hidden)
+		fd := GenFeedback(guess, hidden)
 		if fd.Won() {
 			return i, nil
 		}

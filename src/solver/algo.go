@@ -37,8 +37,8 @@ func RateGuess(guesses Words, oldSolutions Words, guess string, solsLeft []int) 
 	}
 
 	for _, word := range oldSolutions {
-		fd := GenerateFeedback(guess, word)
-		solsLeft[fd.Hash()]++
+		fd := GenFeedbackHash(guess, word)
+		solsLeft[fd]++
 	}
 
 	info := 0.0
