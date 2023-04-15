@@ -150,6 +150,7 @@ func GenFeedback(guess, solution string) Feedback {
 }
 
 func GenFeedbackHash(guess, solution string) int {
+	// this is just slightly faster than actually generating the fd and then taking its hash
 	solAlpha := make([]uint8, 26)
 	for i := range solution {
 		solAlpha[solution[i]-'a']++
