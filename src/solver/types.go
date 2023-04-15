@@ -167,12 +167,7 @@ func GenFeedbackHash(guess, solution string) int {
 
 	mul = 1
 	for i := range solution {
-		if guess[i] == solution[i] {
-			mul *= 3
-			continue
-		}
-
-		if solAlpha[guess[i]-'a'] > 0 {
+		if guess[i] != solution[i] && solAlpha[guess[i]-'a'] > 0 {
 			fd += mul
 			solAlpha[guess[i]-'a']--
 		}
