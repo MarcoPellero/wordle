@@ -1,6 +1,7 @@
 package solver
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"io"
@@ -39,4 +40,23 @@ func ReadWords(path string) (Words, error) {
 	}
 
 	return words, nil
+}
+
+func WriteWords(wordlist Words, path string) error {
+	// mainly for use by external packages
+	f, err := os.Create(path)
+	if err != nil {
+		return fmt.Errorf("WriteWords: %s", err.Error())
+	}
+	defer f.Close()
+
+	writer := bufio.NewWriter(f)
+	defer writer.Flush()
+
+	for _, word := range wordlist {
+		writer.WriteString(word)
+		writer.WriteByte('\n')
+	}
+
+	return nil
 }
