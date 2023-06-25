@@ -1,16 +1,24 @@
+use std::collections::HashMap;
+
 use fast_math::log2_raw;
 
 use crate::game;
 
-pub struct BaseAlgo<'a> {
+pub struct Guesser<'a> {
 	wordlist: &'a Vec<String>,
 	possible_solutions: Vec<String>,
+	best_guess_cache: HashMap<Vec<String>, String>,
 	round: u64
 }
 
-impl BaseAlgo<'_> {
-	pub fn new(wordlist: &Vec<String>) -> BaseAlgo {
-		BaseAlgo { wordlist: wordlist, possible_solutions: vec![], round: 0 }
+impl Guesser<'_> {
+	pub fn new(wordlist: &Vec<String>) -> Guesser {
+		Guesser {
+			wordlist: wordlist,
+			possible_solutions: vec![],
+			best_guess_cache: HashMap::new(),
+			round: 0
+		}
 	}
 
 	fn filter_solution(guess: &str, feedback: usize, possible_solution: &str) -> bool {
@@ -44,7 +52,7 @@ impl BaseAlgo<'_> {
 	}
 }
 
-impl game::Algorithm for BaseAlgo<'_> {
+impl game::Algorithm for Guesser<'_> {
 	fn init(&mut self) {
 		self.possible_solutions = self.wordlist.to_vec();
 		self.round = 0;
@@ -60,6 +68,11 @@ impl game::Algorithm for BaseAlgo<'_> {
 			return self.possible_solutions[0].to_owned();
 		}
 
+		match self.best_guess_cache.get(&self.possible_solutions) {
+			Some(v) => return v.to_owned(),
+			None => {}
+		};
+
 		let ratings = self.wordlist
 			.iter()
 			.map(|guess| self.rate_guess(guess));
@@ -73,13 +86,15 @@ impl game::Algorithm for BaseAlgo<'_> {
 			}
 		}
 
+		self.best_guess_cache.insert(self.possible_solutions.clone(), self.wordlist[best_idx].clone());
+
 		self.wordlist[best_idx].clone()
 	}
 
 	fn update(&mut self, guess: &str, feedback: usize) {
 		self.possible_solutions = self.possible_solutions
 			.iter()
-			.filter(|word| BaseAlgo::filter_solution(&guess, feedback, *word))
+			.filter(|word| Guesser::filter_solution(&guess, feedback, *word))
 			.map(|word| word.to_owned())
 			.collect();
 	}

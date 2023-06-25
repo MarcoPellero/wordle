@@ -62,7 +62,7 @@ fn main() {
 	let wordlist = read_wordlist("../data/wordlist.txt");
 	println!("Read {} words from file", wordlist.len());
 
-	let mut guesser = algo::BaseAlgo::new(&wordlist);
+	let mut guesser = algo::Guesser::new(&wordlist);
 
 	let mean = dictionary_simulation(&mut guesser, &wordlist);
 	println!("Mean guesses: {}", mean);
