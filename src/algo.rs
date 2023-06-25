@@ -13,21 +13,21 @@ impl BaseAlgo<'_> {
 		BaseAlgo { wordlist: wordlist, possible_solutions: vec![], round: 0 }
 	}
 
-	fn filter_solution(guess: &str, feedback: &game::FeedbackArr, possible_solution: &str) -> bool {
+	fn filter_solution(guess: &str, feedback: usize, possible_solution: &str) -> bool {
 		if guess == possible_solution {
-			return game::Feedback::is_solution(feedback);
+			return feedback == 242;
 		}
 
-		let feedback2 = game::Feedback::generate(guess, possible_solution);
-		return game::Feedback::cmp(feedback, &feedback2);
+		let feedback2 = game::generate_hash(guess, possible_solution);
+		return feedback == feedback2;
 	}
 
 	fn rate_guess(&self, guess: &str) -> f32 {
 		let mut remaining_solutions = [0u64; 3usize.pow(game::WORD_SIZE as u32)];
 
 		for solution in self.possible_solutions.iter() {
-			let feedback = game::Feedback::generate(guess, solution);
-			remaining_solutions[game::Feedback::hash(&feedback)] += 1;
+			let feedback = game::generate_hash(guess, solution);
+			remaining_solutions[feedback] += 1;
 		}
 
 		remaining_solutions
@@ -76,10 +76,10 @@ impl game::Algorithm for BaseAlgo<'_> {
 		self.wordlist[best_idx].clone()
 	}
 
-	fn update(&mut self, guess: &str, feedback: &game::FeedbackArr) {
+	fn update(&mut self, guess: &str, feedback: usize) {
 		self.possible_solutions = self.possible_solutions
 			.iter()
-			.filter(|word| BaseAlgo::filter_solution(&guess, &feedback, *word))
+			.filter(|word| BaseAlgo::filter_solution(&guess, feedback, *word))
 			.map(|word| word.to_owned())
 			.collect();
 	}

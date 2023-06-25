@@ -30,19 +30,19 @@ fn word_simulation(guesser: &mut impl game::Algorithm, solution: &str) -> u64 {
 
 	for i in 1.. {
 		let next_guess = guesser.guess();
-		let fd = game::Feedback::generate(next_guess.as_str(), solution);
+		let fd = game::generate_hash(next_guess.as_str(), solution);
 		if LOG_LEVEL >= 2 {
-			println!("{} | {} = {}", next_guess, solution, game::Feedback::to_str(&fd));
+			println!("{} | {} = {}", next_guess, solution, game::to_str(fd));
 		}
 
-		if game::Feedback::is_solution(&fd) {
+		if fd == 242 {
 			if LOG_LEVEL >= 1 {
 				println!("{} done in {}g", solution, i);
 			}
 			return i;
 		}
 
-		guesser.update(&next_guess, &fd);
+		guesser.update(&next_guess, fd);
 	}
 
 	unreachable!()
