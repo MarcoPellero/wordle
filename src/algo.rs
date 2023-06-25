@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use fast_math::log2_raw;
 
 use crate::game;
@@ -14,7 +13,7 @@ impl BaseAlgo<'_> {
 		BaseAlgo { wordlist: wordlist, possible_solutions: vec![], round: 0 }
 	}
 
-	fn filter_solution(guess: &str, feedback: &Vec<game::Feedback>, possible_solution: &str) -> bool {
+	fn filter_solution(guess: &str, feedback: &game::FeedbackArr, possible_solution: &str) -> bool {
 		if guess == possible_solution {
 			return game::Feedback::is_solution(feedback);
 		}
@@ -77,7 +76,7 @@ impl game::Algorithm for BaseAlgo<'_> {
 		self.wordlist[best_idx].clone()
 	}
 
-	fn update(&mut self, guess: String, feedback: &Vec<game::Feedback>) {
+	fn update(&mut self, guess: &str, feedback: &game::FeedbackArr) {
 		self.possible_solutions = self.possible_solutions
 			.iter()
 			.filter(|word| BaseAlgo::filter_solution(&guess, &feedback, *word))

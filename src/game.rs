@@ -1,20 +1,18 @@
-pub trait Algorithm {
-	fn init(&mut self);
-	fn guess(&mut self) -> String;
-	fn update(&mut self, guess: String, feedback: &Vec<Feedback>);
-}
+pub const WORD_SIZE: usize = 5;
 
-#[derive(Clone, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Feedback {
 	Black,
 	Yellow,
 	Green
 }
 
+pub type FeedbackArr = [Feedback; WORD_SIZE];
+
 impl Feedback {
-	pub fn generate(guess: &str, solution: &str) -> Vec<Feedback> {
+	pub fn generate(guess: &str, solution: &str) -> FeedbackArr {
 		let mut alphabet = [0u8; 26];
-		let mut fd_chars = vec![Feedback::Black; guess.len()];
+		let mut fd_chars = [Feedback::Black; WORD_SIZE];
 	
 		const TO_NUM: u8 = 'a' as u8;
 		let guess_bytes = guess.as_bytes();
@@ -42,7 +40,7 @@ impl Feedback {
 		fd_chars
 	}
 
-	pub fn is_solution(feedback: &Vec<Feedback>) -> bool {
+	pub fn is_solution(feedback: &FeedbackArr) -> bool {
 		feedback
 			.iter()
 			.map(|c| *c == Feedback::Green)
@@ -50,7 +48,7 @@ impl Feedback {
 			.unwrap()
 	}
 
-	pub fn cmp(a: &Vec<Feedback>, b: &Vec<Feedback>) -> bool {
+	pub fn cmp(a: &FeedbackArr, b: &FeedbackArr) -> bool {
 		a
 			.iter()
 			.zip(b)
@@ -59,7 +57,7 @@ impl Feedback {
 			.unwrap()
 	}
 
-	pub fn hash(feedback: &Vec<Feedback>) -> usize {
+	pub fn hash(feedback: &FeedbackArr) -> usize {
 		let mut acc = 0;
 		let mut mul = 1;
 
@@ -75,7 +73,7 @@ impl Feedback {
 		acc
 	}
 
-	pub fn to_str(feedback: &Vec<Feedback>) -> String {
+	pub fn to_str(feedback: &FeedbackArr) -> String {
 		feedback
 			.iter()
 			.map(|c| match c {
@@ -85,4 +83,11 @@ impl Feedback {
 			})
 			.collect()
 	}
+}
+
+
+pub trait Algorithm {
+	fn init(&mut self);
+	fn guess(&mut self) -> String;
+	fn update(&mut self, guess: &str, feedback: &FeedbackArr);
 }

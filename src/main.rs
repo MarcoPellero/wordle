@@ -9,13 +9,20 @@ mod game;
 const LOG_LEVEL: u8 = 2;
 const MAX_RUNS: usize = 4000;
 
-fn read_wordlist(path: &str) -> Result<Vec<String>, io::Error> {
-    let file = File::open(Path::new(path))?;
+fn read_wordlist(path: &str) -> Vec<String> {
+    let file = File::open(Path::new(path)).unwrap();
     let reader = io::BufReader::new(file);
 
-	reader
+	let wordlist: Vec<String> = reader
 		.lines()
-		.collect()
+		.map(|line| line.unwrap())
+		.collect();
+
+	for word in wordlist.iter() {
+		assert_eq!(word.len(), game::WORD_SIZE);
+	}
+
+	wordlist
 }
 
 fn word_simulation(guesser: &mut impl game::Algorithm, solution: &str) -> u64 {
@@ -35,7 +42,7 @@ fn word_simulation(guesser: &mut impl game::Algorithm, solution: &str) -> u64 {
 			return i;
 		}
 
-		guesser.update(next_guess, &fd);
+		guesser.update(&next_guess, &fd);
 	}
 
 	unreachable!()
@@ -52,7 +59,7 @@ fn dictionary_simulation(guesser: &mut impl game::Algorithm, wordlist: &Vec<Stri
 }
 
 fn main() {
-	let wordlist = read_wordlist("../data/wordlist.txt").unwrap();
+	let wordlist = read_wordlist("../data/wordlist.txt");
 	println!("Read {} words from file", wordlist.len());
 
 	let mut guesser = algo::BaseAlgo::new(&wordlist);
