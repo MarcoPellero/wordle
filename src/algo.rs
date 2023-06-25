@@ -46,7 +46,7 @@ impl BaseAlgo<'_> {
 
 impl game::Algorithm for BaseAlgo<'_> {
 	fn init(&mut self) {
-		self.possible_solutions = self.wordlist.clone();
+		self.possible_solutions = self.wordlist.to_vec();
 		self.round = 0;
 	}
 
