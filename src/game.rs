@@ -1,6 +1,6 @@
 pub const WORD_SIZE: usize = 5;
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, PartialEq)]
 pub enum Feedback {
 	Black,
 	Yellow,

@@ -23,7 +23,7 @@ impl BaseAlgo<'_> {
 	}
 
 	fn rate_guess(&self, guess: &str) -> f32 {
-		let mut remaining_solutions = vec![0u64; 3usize.pow(guess.len() as u32)];
+		let mut remaining_solutions = [0u64; 3usize.pow(game::WORD_SIZE as u32)];
 
 		for solution in self.possible_solutions.iter() {
 			let feedback = game::Feedback::generate(guess, solution);
