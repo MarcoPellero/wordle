@@ -11,37 +11,37 @@ pub enum Feedback {
 	Green
 }
 
-pub fn generate_feedback(guess: &str, solution: &str) -> Vec<Feedback> {
-	let mut alphabet = [0u8; 26];
-	let mut fd_chars = vec![Feedback::Black; guess.len()];
-
-	const TO_NUM: u8 = 'a' as u8;
-	let guess_bytes = guess.as_bytes();
-	let solution_bytes = solution.as_bytes();
-	
-	for i in 0..guess.len() {
-		if guess_bytes[i] == solution_bytes[i] {
-			fd_chars[i] = Feedback::Green;
-		} else {
-			alphabet[(solution_bytes[i] - TO_NUM) as usize] += 1;
-		}
-	}
-
-	for i in 0..guess.len() {
-		if guess_bytes[i] == solution_bytes[i] {
-			continue;
-		}
-		
-		if alphabet[(guess_bytes[i] - TO_NUM) as usize] > 0 {
-			fd_chars[i] = Feedback::Yellow;
-			alphabet[(guess_bytes[i] - TO_NUM) as usize] -= 1;
-		}
-	}
-
-	fd_chars
-}
-
 impl Feedback {
+	pub fn generate(guess: &str, solution: &str) -> Vec<Feedback> {
+		let mut alphabet = [0u8; 26];
+		let mut fd_chars = vec![Feedback::Black; guess.len()];
+	
+		const TO_NUM: u8 = 'a' as u8;
+		let guess_bytes = guess.as_bytes();
+		let solution_bytes = solution.as_bytes();
+		
+		for i in 0..guess.len() {
+			if guess_bytes[i] == solution_bytes[i] {
+				fd_chars[i] = Feedback::Green;
+			} else {
+				alphabet[(solution_bytes[i] - TO_NUM) as usize] += 1;
+			}
+		}
+	
+		for i in 0..guess.len() {
+			if guess_bytes[i] == solution_bytes[i] {
+				continue;
+			}
+			
+			if alphabet[(guess_bytes[i] - TO_NUM) as usize] > 0 {
+				fd_chars[i] = Feedback::Yellow;
+				alphabet[(guess_bytes[i] - TO_NUM) as usize] -= 1;
+			}
+		}
+	
+		fd_chars
+	}
+
 	pub fn is_solution(feedback: &Vec<Feedback>) -> bool {
 		feedback
 			.iter()

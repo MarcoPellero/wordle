@@ -18,7 +18,7 @@ impl BaseAlgo<'_> {
 			return game::Feedback::is_solution(feedback);
 		}
 
-		let feedback2 = game::generate_feedback(guess, possible_solution);
+		let feedback2 = game::Feedback::generate(guess, possible_solution);
 		return game::Feedback::cmp(feedback, &feedback2);
 	}
 
@@ -26,7 +26,7 @@ impl BaseAlgo<'_> {
 		let mut remaining_solutions: HashMap<Vec<game::Feedback>, u64> = HashMap::new();
 
 		for solution in self.possible_solutions.iter() {
-			let feedback = game::generate_feedback(guess, solution);
+			let feedback = game::Feedback::generate(guess, solution);
 			let key = remaining_solutions.get_mut(&feedback);
 			match key {
 				Some(v) => { *v += 1; },
