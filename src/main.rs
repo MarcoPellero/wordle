@@ -1,3 +1,4 @@
+use std::cmp::min;
 use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
@@ -6,6 +7,7 @@ mod algo;
 mod game;
 
 const LOG_LEVEL: u8 = 2;
+const MAX_RUNS: usize = 300;
 
 fn read_wordlist(path: &str) -> Result<Vec<String>, io::Error> {
     let file = File::open(Path::new(path))?;
@@ -40,12 +42,13 @@ fn word_simulation(guesser: &mut impl game::Algorithm, solution: &str) -> u64 {
 }
 
 fn dictionary_simulation(guesser: &mut impl game::Algorithm, wordlist: &Vec<String>) -> f64 {
-	let score_sum: u64 = wordlist
-		.iter()
+	let runs = min(MAX_RUNS, wordlist.len());
+	let score_sum: u64 = (0..runs)
+		.map(|i| &wordlist[i])
 		.map(|solution| word_simulation(guesser, solution))
 		.sum();
 
-	(score_sum as f64) / (wordlist.len() as f64)
+	(score_sum as f64) / (runs as f64)
 }
 
 fn main() {
