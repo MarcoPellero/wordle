@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use fast_math::log2_raw;
 
 use crate::game;
 
@@ -22,7 +23,7 @@ impl BaseAlgo<'_> {
 		return game::Feedback::cmp(feedback, &feedback2);
 	}
 
-	fn rate_guess(&self, guess: &str) -> f64 {
+	fn rate_guess(&self, guess: &str) -> f32 {
 		let mut remaining_solutions = vec![0u64; 3usize.pow(guess.len() as u32)];
 
 		for solution in self.possible_solutions.iter() {
@@ -34,10 +35,10 @@ impl BaseAlgo<'_> {
 			.iter()
 			.map(|x| {
 				if *x == 0 {
-					0f64
+					0f32
 				} else {
-					let px = (*x as f64) / (self.possible_solutions.len() as f64);
-					-px * px.log2()
+					let px = (*x as f32) / (self.possible_solutions.len() as f32);
+					-px * log2_raw(px)
 				}
 			})
 			.sum()
@@ -65,7 +66,7 @@ impl game::Algorithm for BaseAlgo<'_> {
 			.map(|guess| self.rate_guess(guess));
 
 		let mut best_idx = 0;
-		let mut best_rating = 0f64;
+		let mut best_rating = 0f32;
 		for (i, rating) in ratings.enumerate() {
 			if rating > best_rating {
 				best_idx = i;

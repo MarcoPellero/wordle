@@ -7,7 +7,7 @@ mod algo;
 mod game;
 
 const LOG_LEVEL: u8 = 2;
-const MAX_RUNS: usize = 300;
+const MAX_RUNS: usize = 4000;
 
 fn read_wordlist(path: &str) -> Result<Vec<String>, io::Error> {
     let file = File::open(Path::new(path))?;
