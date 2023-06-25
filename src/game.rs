@@ -58,4 +58,14 @@ impl Feedback {
 			.reduce(|total, c| total && c)
 			.unwrap()
 	}
+	pub fn to_str(feedback: &Vec<Feedback>) -> String {
+		feedback
+			.iter()
+			.map(|c| match c {
+				Feedback::Black => 'b',
+				Feedback::Yellow => 'y',
+				Feedback::Green => 'g'
+			})
+			.collect()
+	}
 }
