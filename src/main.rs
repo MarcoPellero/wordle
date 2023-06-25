@@ -2,7 +2,7 @@ use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
 
-mod algo;
+mod algos;
 mod game;
 
 const LOG_LEVEL: u8 = 2;
@@ -52,7 +52,7 @@ fn main() {
 	let wordlist = read_wordlist("../data/wordlist.txt").unwrap();
 	println!("Read {} words from file", wordlist.len());
 
-	let mut guesser = algo::new_guesser(&wordlist);
+	let mut guesser = algos::base::BaseAlgo::new(&wordlist);
 
 	let mean = dictionary_simulation(&mut guesser, &wordlist);
 	println!("Mean guesses: {}", mean);

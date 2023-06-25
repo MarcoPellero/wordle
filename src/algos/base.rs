@@ -9,6 +9,10 @@ pub struct BaseAlgo<'a> {
 }
 
 impl BaseAlgo<'_> {
+	pub fn new(wordlist: &Vec<String>) -> BaseAlgo {
+		BaseAlgo { wordlist: wordlist, possible_solutions: vec![], round: 0 }
+	}
+
 	fn filter_solution(guess: &str, feeback: &str, possible_solution: &str) -> bool {
 		if guess == possible_solution {
 			return feeback == "ggggg";
@@ -83,8 +87,4 @@ impl game::Algorithm for BaseAlgo<'_> {
 			.map(|word| word.to_owned())
 			.collect();
 	}
-}
-
-pub fn new_guesser(wordlist: &Vec<String>) -> BaseAlgo {
-	BaseAlgo { wordlist: wordlist, possible_solutions: vec![], round: 0 }
 }
