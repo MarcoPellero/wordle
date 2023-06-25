@@ -58,6 +58,23 @@ impl Feedback {
 			.reduce(|total, c| total && c)
 			.unwrap()
 	}
+
+	pub fn hash(feedback: &Vec<Feedback>) -> usize {
+		let mut acc = 0;
+		let mut mul = 1;
+
+		for c in feedback {
+			acc += mul * match *c {
+				Feedback::Black => 0,
+				Feedback::Yellow => 1,
+				Feedback::Green => 2
+			};
+			mul *= 3;
+		}
+
+		acc
+	}
+
 	pub fn to_str(feedback: &Vec<Feedback>) -> String {
 		feedback
 			.iter()

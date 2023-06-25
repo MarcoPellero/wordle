@@ -23,19 +23,15 @@ impl BaseAlgo<'_> {
 	}
 
 	fn rate_guess(&self, guess: &str) -> f64 {
-		let mut remaining_solutions: HashMap<Vec<game::Feedback>, u64> = HashMap::new();
+		let mut remaining_solutions = vec![0u64; 3usize.pow(guess.len() as u32)];
 
 		for solution in self.possible_solutions.iter() {
 			let feedback = game::Feedback::generate(guess, solution);
-			let key = remaining_solutions.get_mut(&feedback);
-			match key {
-				Some(v) => { *v += 1; },
-				None => { remaining_solutions.insert(feedback, 1); }
-			};
+			remaining_solutions[game::Feedback::hash(&feedback)] += 1;
 		}
 
 		remaining_solutions
-			.values()
+			.iter()
 			.map(|x| {
 				if *x == 0 {
 					0f64
