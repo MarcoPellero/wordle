@@ -11,6 +11,8 @@ pub fn generate_hash(guess: &str, solution: &str) -> usize {
 		
 	let mut mul = 1;
 	for i in 0..guess.len() {
+		// i tried making this branchless but it just made performance worse
+		
 		if guess_bytes[i] == solution_bytes[i] {
 			is_green[i] = true;
 			feedback += mul*2;
@@ -23,10 +25,9 @@ pub fn generate_hash(guess: &str, solution: &str) -> usize {
 	
 	mul = 1;
 	for i in 0..guess.len() {
-		if !is_green[i] && alphabet[(guess_bytes[i] - TO_NUM) as usize] > 0 {
-			feedback += mul;
-			alphabet[(guess_bytes[i] - TO_NUM) as usize] -= 1;
-		}
+		let is_yellow = !is_green[i] && alphabet[(guess_bytes[i] - TO_NUM) as usize] > 0;
+		feedback += mul * (is_yellow as usize);
+		alphabet[(guess_bytes[i] - TO_NUM) as usize] -= is_yellow as u8;
 
 		mul *= 3;
 	}
@@ -55,7 +56,6 @@ pub fn to_str(feedback: usize) -> String {
 		.iter()
 		.collect()
 }
-
 
 pub trait Algorithm {
 	fn init(&mut self);
