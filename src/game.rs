@@ -1,6 +1,7 @@
 pub const WORD_SIZE: usize = 5;
+pub const FDHASH_MAX: usize = 3usize.pow(WORD_SIZE as u32) - 1;
 
-pub fn generate_hash(guess: &str, solution: &str) -> usize {
+pub fn generate_feedback_hash(guess: &str, solution: &str) -> usize {
 	let mut alphabet = [0u8; 26];
 	let mut feedback = 0usize;
 	let mut is_green = [false; WORD_SIZE];

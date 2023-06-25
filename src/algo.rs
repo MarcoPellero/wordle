@@ -15,10 +15,10 @@ impl BaseAlgo<'_> {
 
 	fn filter_solution(guess: &str, feedback: usize, possible_solution: &str) -> bool {
 		if guess == possible_solution {
-			return feedback == 242;
+			return feedback == game::FDHASH_MAX;
 		}
 
-		let feedback2 = game::generate_hash(guess, possible_solution);
+		let feedback2 = game::generate_feedback_hash(guess, possible_solution);
 		return feedback == feedback2;
 	}
 
@@ -26,7 +26,7 @@ impl BaseAlgo<'_> {
 		let mut remaining_solutions = [0u64; 3usize.pow(game::WORD_SIZE as u32)];
 
 		for solution in self.possible_solutions.iter() {
-			let feedback = game::generate_hash(guess, solution);
+			let feedback = game::generate_feedback_hash(guess, solution);
 			remaining_solutions[feedback] += 1;
 		}
 
