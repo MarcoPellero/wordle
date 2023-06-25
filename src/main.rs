@@ -25,17 +25,17 @@ fn word_simulation(guesser: &mut impl game::Algorithm, solution: &str) -> u64 {
 		let next_guess = guesser.guess();
 		let fd = game::generate_feedback(next_guess.as_str(), solution);
 		if LOG_LEVEL >= 2 {
-			println!("{} | {} = {}", next_guess, solution, fd);
+			// println!("{} | {} = {}", next_guess, solution, fd);
 		}
 
-		if fd == "ggggg" {
+		if game::Feedback::is_solution(&fd) {
 			if LOG_LEVEL >= 1 {
 				println!("{} done in {}g\n", solution, i);
 			}
 			return i;
 		}
 
-		guesser.update(next_guess, fd);
+		guesser.update(next_guess, &fd);
 	}
 
 	unreachable!()

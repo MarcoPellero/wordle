@@ -13,17 +13,17 @@ impl BaseAlgo<'_> {
 		BaseAlgo { wordlist: wordlist, possible_solutions: vec![], round: 0 }
 	}
 
-	fn filter_solution(guess: &str, feeback: &str, possible_solution: &str) -> bool {
+	fn filter_solution(guess: &str, feedback: &Vec<game::Feedback>, possible_solution: &str) -> bool {
 		if guess == possible_solution {
-			return feeback == "ggggg";
+			return game::Feedback::is_solution(feedback);
 		}
 
 		let feedback2 = game::generate_feedback(guess, possible_solution);
-		return feeback == feedback2;
+		return game::Feedback::cmp(feedback, &feedback2);
 	}
 
 	fn rate_guess(&self, guess: &str) -> f64 {
-		let mut remaining_solutions: HashMap<String, u64> = HashMap::new();
+		let mut remaining_solutions: HashMap<Vec<game::Feedback>, u64> = HashMap::new();
 
 		for solution in self.possible_solutions.iter() {
 			let feedback = game::generate_feedback(guess, solution);
@@ -80,7 +80,7 @@ impl game::Algorithm for BaseAlgo<'_> {
 		self.wordlist[best_idx].clone()
 	}
 
-	fn update(&mut self, guess: String, feedback: String) {
+	fn update(&mut self, guess: String, feedback: &Vec<game::Feedback>) {
 		self.possible_solutions = self.possible_solutions
 			.iter()
 			.filter(|word| BaseAlgo::filter_solution(&guess, &feedback, *word))
