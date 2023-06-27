@@ -12,6 +12,10 @@ pub struct Guesser<'a> {
 }
 
 impl Guesser<'_> {
+	pub fn init(&mut self) {
+		self.round = 0;
+	}
+
 	pub fn new(wordlist: &Vec<String>) -> Guesser {
 		Guesser {
 			wordlist: wordlist,
@@ -20,24 +24,24 @@ impl Guesser<'_> {
 			round: 0
 		}
 	}
-
+	
 	fn filter_solution(guess: &str, feedback: usize, possible_solution: &str) -> bool {
 		if guess == possible_solution {
 			return feedback == game::FDHASH_MAX;
 		}
-
+	
 		let feedback2 = game::generate_feedback_hash(guess, possible_solution);
 		return feedback == feedback2;
 	}
-
+	
 	fn rate_guess(&self, guess: &str) -> f32 {
 		let mut remaining_solutions = [0u64; 3usize.pow(game::WORD_SIZE as u32)];
-
+	
 		for solution in self.possible_solutions.iter() {
 			let feedback = game::generate_feedback_hash(guess, solution);
 			remaining_solutions[feedback] += 1;
 		}
-
+	
 		remaining_solutions
 			.iter()
 			.map(|x| {
@@ -50,14 +54,8 @@ impl Guesser<'_> {
 			})
 			.sum()
 	}
-}
 
-impl game::Algorithm for Guesser<'_> {
-	fn init(&mut self) {
-		self.round = 0;
-	}
-
-	fn guess(&mut self) -> String {
+	pub fn guess(&mut self) -> String {
 		self.round += 1;
 		if self.round == 1 {
 			return "sarti".to_owned();
@@ -90,7 +88,7 @@ impl game::Algorithm for Guesser<'_> {
 		self.wordlist[best_idx].clone()
 	}
 
-	fn update(&mut self, guess: &str, feedback: usize) {
+	pub fn update(&mut self, guess: &str, feedback: usize) {
 		let old_solutions = if self.round <= 1 { self.wordlist } else { &self.possible_solutions };
 		self.possible_solutions = old_solutions
 			.iter()

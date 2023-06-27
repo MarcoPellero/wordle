@@ -25,7 +25,7 @@ fn read_wordlist(path: &str) -> Vec<String> {
 	wordlist
 }
 
-fn word_simulation(guesser: &mut impl game::Algorithm, solution: &str) -> u64 {
+fn word_simulation(guesser: &mut algo::Guesser, solution: &str) -> u64 {
 	guesser.init();
 
 	for i in 1.. {
@@ -48,7 +48,7 @@ fn word_simulation(guesser: &mut impl game::Algorithm, solution: &str) -> u64 {
 	unreachable!()
 }
 
-fn dictionary_simulation(guesser: &mut impl game::Algorithm, wordlist: &Vec<String>) -> f64 {
+fn dictionary_simulation(guesser: &mut algo::Guesser, wordlist: &Vec<String>) -> f64 {
 	let runs = min(MAX_RUNS, wordlist.len());
 	let score_sum: u64 = (0..runs)
 		.map(|i| &wordlist[i])

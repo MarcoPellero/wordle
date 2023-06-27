@@ -57,9 +57,3 @@ pub fn to_str(feedback: usize) -> String {
 		.iter()
 		.collect()
 }
-
-pub trait Algorithm {
-	fn init(&mut self);
-	fn guess(&mut self) -> String;
-	fn update(&mut self, guess: &str, feedback: usize);
-}
