@@ -1,20 +1,58 @@
 # Wordle Algorithm
-This is a better implementation of 3b1b's algorithm for playing wordle optimally, using information theory.
+This is a faster implementation of 3b1b's algorithm for playing wordle optimally, using information theory.
 
-It's made both for simulations (like 3b1b's), but also for interactive use, possibly programmatically for bots. It's usable as a Go package directly, but it had (and will have) an HTTP api for use in bots written in other languages aswell.
+It's made both for simulations (like 3b1b's), but also for interactive use, mainly programmatically. It's usable as a Go package directly, but it had (and might have again) an HTTP api for use in programs written in other languages aswell.
+
+Below are short descriptions on how to use it, if you have doubts you can open an Issue or contact me via Discord at @marco_pellero
 
 ## How to use it
-I'll write this later :P
+### Rust implementation:
+This one's waaay faster, i had fun optimizing it but there's still more to be done, i think it can be squeezed to be at least 30-70% faster, but i've barely started using Rust.
+
+Just clone it:
+```sh
+git clone git@github.com:MarcoPellero/wordle.git --branch rustified
+```
+Then enter the `src/` folder and run `cargo run --release` (or `cargo r -r`).
+You can change the wordlist in `data/wordlist.txt`, and you should be able to use a different word size, if you want to you'll need to change the `game::WORD_SIZE` const.
+You'll also probably want to change the first guess used, it's currently hard coded. Just search for "sarti" and replace it.
+
+Technically for now there's no way to have a separate guesses & solutions wordlist, but it'd be really easy to implement.
+I also don't know how to write Rust code such that it can be imported from other projects, so that's not done yet.
+
+### Go implementation:
+Import the package from your code:
+```go
+import "github.com/MarcoPellero/wordle/src/solver"
+```
+you can now use the `solver.chooseGuess()` function by passing it two `[]string`s, the first one being the wordlist of usable guesses, and the second one the wordlist of possible solutions, like this:
+```go
+guess, expected_information, err := solver.ChooseGuess(usable_guesses, remaining_solutions)
+```
+After you've gotten the feedback for this guess, you need to parse it to the `solver.Feedback` type, which is a slice of enums with the possible states of `Black`, `Yellow`, and `Green`, like this:
+```go
+func (response string) Feedback() solver.Feedback {
+	fd := make(solver.Feedback, len(data.Word))
+	for i, c := range data {
+		switch c {
+		case "b":
+			fd[i] = solver.Black
+		case "y":
+			fd[i] = solver.Yellow
+		case "g":
+			fd[i] = solver.Green
+		}
+	}
+
+	return fd
+}
+```
+Now you can use it to get the remaining solutions:
+```go
+// signature: ([]string, string, []solver.CharState (the B/Y/G Enum)
+solutions = solver.FilterSolutions(solutions, guess, feedback)
+```
 
 ## How it works
-The basic concepts are the same as 3b1b's algorithm, but the implementation is totally differen.
-
-It goes like this: when looking for the best guess i look at each one of them concurrently, and i calculate for each one how many solutions would be left for any possible feedback i could get, i then apply Shannon's formula on all of those numbers, and that's the expected information for that particular guess. Of course i then look for the guess that maximizes this value.
-
-That's it! That's the algorithm! Except... this is extremely slow, it's `O(AB)` (for A=number of guesses, and B=number of solutions), notably with a very heavy constant factor, operations to find the best guess, so how can i speed this up as well as lighten the CPU load for real-time use? Well, the only thing i can reduce is that `N solutions` part and make some assumptions to eliminate that `N guesses` (That's to say, i hardcoded the first guess).
-
-Basically, i precompute the heaviest calculations, that is, i generate a cache which tells me *"if i guess this word, and i get this feedback, the next best guess is ..."*. You can adjust the depth of this cache in code, but i've found that a 1 layer cache takes a simulation from unbearably long to like 5.6s, 2 layes takes it down to .5s, and 3 layers takes it down to .2s.
-
-3 Layers only weigh 550Kb~, so it's not memory hogging either. It takes around 2s to generate either 2 or 3 laters, and it can be dumped and read from a file.
-
-Notice that all of these times are for a "play-all" simulation, which uses a cache or a chosen first guess to play against the whole dictionary of solutions once. The times for real time use are obviously much lower, for example the simulations that took .2s were using a 3k word dictionary, which means that it took 60μs to play ***a whole game***, that's like 10μs per guess (though it's not actually that linear).
+Watch [3b1b's video](https://www.youtube.com/watch?v=v68zYyaEmEA) to understand the algorithm. His code is more mathy and less codey than mine
+The only difference is that i haven't implemented behaviour to look forward more than 1 guess (yet? :) ), which improves the guessing performances quite a bit.
