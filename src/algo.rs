@@ -54,7 +54,6 @@ impl Guesser<'_> {
 
 impl game::Algorithm for Guesser<'_> {
 	fn init(&mut self) {
-		self.possible_solutions = self.wordlist.to_vec();
 		self.round = 0;
 	}
 
@@ -92,7 +91,8 @@ impl game::Algorithm for Guesser<'_> {
 	}
 
 	fn update(&mut self, guess: &str, feedback: usize) {
-		self.possible_solutions = self.possible_solutions
+		let old_solutions = if self.round <= 1 { self.wordlist } else { &self.possible_solutions };
+		self.possible_solutions = old_solutions
 			.iter()
 			.filter(|word| Guesser::filter_solution(&guess, feedback, *word))
 			.map(|word| word.to_owned())

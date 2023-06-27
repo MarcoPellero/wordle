@@ -5,7 +5,7 @@ pub fn generate_feedback_hash(guess: &str, solution: &str) -> usize {
 	let mut alphabet = [0u8; 26];
 	let mut feedback = 0usize;
 	let mut is_green = [false; WORD_SIZE];
-	
+
 	const TO_NUM: u8 = 'a' as u8;
 	let guess_bytes = guess.as_bytes();
 	let solution_bytes = solution.as_bytes();
