@@ -11,7 +11,7 @@ pub fn generate_feedback_hash(guess: &str, solution: &str) -> usize {
 	let solution_bytes = solution.as_bytes();
 		
 	let mut mul = 1;
-	for i in 0..guess.len() {
+	for i in 0..WORD_SIZE {
 		// i tried making this branchless but it just made performance worse
 		
 		if guess_bytes[i] == solution_bytes[i] {
@@ -25,7 +25,7 @@ pub fn generate_feedback_hash(guess: &str, solution: &str) -> usize {
 	}
 	
 	mul = 1;
-	for i in 0..guess.len() {
+	for i in 0..WORD_SIZE {
 		let is_yellow = !is_green[i] && alphabet[(guess_bytes[i] - TO_NUM) as usize] > 0;
 		feedback += mul * (is_yellow as usize);
 		alphabet[(guess_bytes[i] - TO_NUM) as usize] -= is_yellow as u8;
